@@ -135,7 +135,7 @@ class gameapi_util:
                 self.loopState = self.loop_wait_for_return
                 return
 
-            object_cpp = f"""#include "Game.hpp"
+            object_cpp = f"""#include "{config.GAMEAPI_PATH}"
 
 using namespace RSDK;
 
@@ -180,7 +180,7 @@ void {self.obj_name}::Serialize() {{}}
 """
 
             object_hpp = f"""#pragma once
-#include "Game.hpp"
+#include "{config.GAMEAPI_PATH}"
 
 using namespace RSDK;
 
@@ -325,7 +325,7 @@ struct {self.obj_name} : GameObject::Entity {{
 
         with open(config.PUB_FNS_PATH, "w") as f:
             f.write('#pragma once\n')
-            f.write('#include "RSDKv5/RSDKv5.hpp"')
+            f.write(f'#include "{config.GAMEAPI_PATH}"')
             f.write('\n\nusing namespace RSDK;\n\n')
             f.write('#if RETRO_USE_MOD_LOADER\n')
 
