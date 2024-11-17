@@ -321,7 +321,7 @@ struct {self.obj_name} : GameObject::Entity {{
 
     def gen_pub_dns_imp(self):
         events = ("Update", "LateUpdate", "StaticUpdate", "Draw", "Create", "StageLoad", "EditorDraw", "EditorLoad", "StaticLoad", "Serialize")
-        exclusions = ["*", "RSDK_DECLARE"]
+        exclusions = ["*", "_DECLARE"]
 
         with open(config.PUB_FNS_PATH, "w") as f:
             f.write('#pragma once\n')
@@ -351,8 +351,7 @@ struct {self.obj_name} : GameObject::Entity {{
                 with open(path, "r") as file:
                     for line in file:
                         line = line.rstrip()
-
-                        if (match := re.fullmatch(r"([a-zA-Z0-9\*\s]*) ([^(]*)\((.*)\);", line)) is not None:
+                        if (match := re.fullmatch(r"\s*(?:static )?([a-zA-Z0-9:<>]* ?\**) *([a-zA-Z0-9_]*)\((.*)(?:,|\);)(?:\s*\/\/.*)?", line)) != None:
                             ret_type, name, args = match.groups()
                             ret_type = ret_type.strip()
                             name = name.strip()
@@ -361,25 +360,36 @@ struct {self.obj_name} : GameObject::Entity {{
                                 name = name.replace(exclusion, '')
                             name = name.strip()
 
-                            if name.endswith(events):
+                            if name in events or not name:
                                 continue
+
+                            if (not done):
+                                f.write(f"    // {path.parent.name}/{path.stem}\n")
+                                done = True
+                                if (prepros == "#endif"):
+                                    prepros = ""
+                                    hasPrepos = False
 
                             if prepros and (prepros != "#endif"):
                                 f.write(f"{prepros}\n")
                                 prepros = ""
                                 hasPrepos = True
 
-                            if not done:
-                                f.write(f"    // {path.parent.name}/{path.stem}\n")
-                                done = True
+                            if (prepros == "#endif" and hasPrepos == True):
+                                f.write(f"{prepros}\n")
+                                prepros = ""
+                                hasPrepos = False
 
-                            if name:
-                                f.write(f"    ADD_PUBLIC_FUNC({path.stem}::{name});\n")
+                            f.write(f"    ADD_PUBLIC_FUNC({path.stem}::{name});\n")
 
                             if prepros == "#endif":
                                 f.write(f"{prepros}\n")
                                 prepros = ""
                                 hasPrepos = False
+                        elif line.startswith("#"):
+                            prepros = line
+                        else:
+                            prepros = ""
 
                 if hasPrepos:
                     f.write("#endif\n")
