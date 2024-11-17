@@ -135,124 +135,99 @@ class gameapi_util:
                 self.loopState = self.loop_wait_for_return
                 return
 
-            object_cpp = f"""#include "{config.GAMEAPI_INC_PATH}"
-
-using namespace RSDK;
-
-namespace {config.OBJECT_NAMESPACE}
-{{
-
-// -------------------
-// Object Registration
-// -------------------
-
-RSDK_REGISTER_OBJECT({self.obj_name});
-
-// -------------
-// Entity Events
-// -------------
-
-void {self.obj_name}::Update() {{}}
-
-void {self.obj_name}::LateUpdate() {{}}
-
-void {self.obj_name}::StaticUpdate() {{}}
-
-void {self.obj_name}::Draw() {{}}
-
-void {self.obj_name}::Create(void *data) {{}}
-
-void {self.obj_name}::StageLoad() {{}}
-
-#if GAME_INCLUDE_EDITOR
-void {self.obj_name}::EditorLoad() {{}}
-
-void {self.obj_name}::EditorDraw() {{}}
-#endif
-
-#if RETRO_REV0U
-void {self.obj_name}::StaticLoad(Static *sVars) {{ RSDK_INIT_STATIC_VARS({self.obj_name}); }}
-#endif
-
-void {self.obj_name}::Serialize() {{}}
-
-}} // namespace GameLogic
-"""
-
-            object_hpp = f"""#pragma once
-#include "{config.GAMEAPI_INC_PATH}"
-
-using namespace RSDK;
-
-// ------------------
-// Macros/Definitions
-// ------------------
-
-namespace {config.OBJECT_NAMESPACE}
-{{
-struct {self.obj_name} : GameObject::Entity {{
-
-    // ---------------
-    // Enums & Structs
-    // ---------------
-
-    // ----------------
-    // Static Variables
-    // ----------------
-
-    struct Static : GameObject::Static {{
-    }};
-
-    // ----------------
-    // Entity Variables
-    // ----------------
-
-    // ----------------------
-    // Standard Entity Events
-    // ----------------------
-
-    void Create(void *data);
-    void Draw();
-    void Update();
-    void LateUpdate();
-    static void StaticUpdate();
-    static void StageLoad();
-#if RETRO_REV0U
-    static void StaticLoad(Static *sVars);
-#endif
-    static void Serialize();
-
-#if GAME_INCLUDE_EDITOR
-    static void EditorLoad();
-    void EditorDraw();
-#endif
-
-    // ----------------------
-    // Extra Entity Functions
-    // ----------------------
-
-    // -------------
-    // Object States
-    // -------------
-
-    // ------------------
-    // Object Draw States
-    // ------------------
-
-    // -------------------
-    // Static Declarations
-    // -------------------
-
-    RSDK_DECLARE({self.obj_name})
-}};
-}} // namespace GameLogic
-"""
             try:
                 with open(cpp_path, "w") as cpp_out:
-                    cpp_out.write(object_cpp)
+                    cpp_out.write(f'#include "{config.GAMEAPI_INC_PATH}"\n\n')
+                    cpp_out.write('using namespace RSDK;\n\n')
+                    cpp_out.write(f'namespace {config.OBJECT_NAMESPACE}\n{{\n\n')
+
+                    cpp_out.write('// -------------------\n')
+                    cpp_out.write('// Object Registration\n')
+                    cpp_out.write('// -------------------\n\n')
+                    cpp_out.write(f'RSDK_REGISTER_OBJECT({self.obj_name});\n\n')
+
+                    cpp_out.write('// -------------\n')
+                    cpp_out.write('// Entity Events\n')
+                    cpp_out.write('// -------------\n\n')
+                    cpp_out.write(f'void {self.obj_name}::Update() {{}}\n\n')
+                    cpp_out.write(f'void {self.obj_name}::LateUpdate() {{}}\n\n')
+                    cpp_out.write(f'void {self.obj_name}::StaticUpdate() {{}}\n\n')
+                    cpp_out.write(f'void {self.obj_name}::Draw() {{}}\n\n')
+                    cpp_out.write(f'void {self.obj_name}::Create(void* data) {{}}\n\n')
+                    cpp_out.write(f'void {self.obj_name}::StageLoad() {{}}\n\n')
+
+                    cpp_out.write('#if GAME_INCLUDE_EDITOR\n')
+                    cpp_out.write(f'void {self.obj_name}::EditorLoad() {{}}\n\n')
+                    cpp_out.write(f'void {self.obj_name}::EditorDraw() {{}}\n')
+                    cpp_out.write('#endif\n\n')
+
+                    cpp_out.write('#if RETRO_REV0U\n')
+                    cpp_out.write(f'void {self.obj_name}::StaticLoad(Static* sVars) {{ RSDK_INIT_STATIC_VARS({self.obj_name}); }}\n')
+                    cpp_out.write('#endif\n\n')
+
+                    cpp_out.write(f'void {self.obj_name}::Serialize() {{}}\n\n')
+
+                    cpp_out.write(f'}} // namespace {config.OBJECT_NAMESPACE}')
 
                 with open(hpp_path, "w") as hpp_out:
-                    hpp_out.write(object_hpp)
+                    hpp_out.write('#pragma once\n')
+                    hpp_out.write(f'#include "{config.GAMEAPI_INC_PATH}"\n\n')
+                    hpp_out.write('using namespace RSDK;\n\n')
+                    hpp_out.write(f'namespace {config.OBJECT_NAMESPACE}\n{{\n')
+                    hpp_out.write(f'struct {self.obj_name} : GameObject::Entity {{\n\n')
+
+                    hpp_out.write('    // ---------------\n')
+                    hpp_out.write('    // Enums & Structs\n')
+                    hpp_out.write('    // ---------------\n\n')
+
+                    hpp_out.write('    // ----------------\n')
+                    hpp_out.write('    // Static Variables\n')
+                    hpp_out.write('    // ----------------\n\n')
+
+                    hpp_out.write('    struct Static : GameObject::Static {\n    };\n\n')
+
+                    hpp_out.write('    // ----------------\n')
+                    hpp_out.write('    // Entity Variables\n')
+                    hpp_out.write('    // ----------------\n\n')
+
+                    hpp_out.write('    // ----------------------\n')
+                    hpp_out.write('    // Standard Entity Events\n')
+                    hpp_out.write('    // ----------------------\n\n')
+
+                    hpp_out.write('    void Create(void* data);\n')
+                    hpp_out.write('    void Draw();\n')
+                    hpp_out.write('    void Update();\n')
+                    hpp_out.write('    void LateUpdate();\n')
+                    hpp_out.write('    static void StaticUpdate();\n')
+                    hpp_out.write('    static void StageLoad();\n')
+                    hpp_out.write('#if RETRO_REV0U\n')
+                    hpp_out.write('    static void StaticLoad(Static* sVars);\n')
+                    hpp_out.write('#endif\n')
+                    hpp_out.write('    static void Serialize();\n\n')
+                    hpp_out.write('#if GAME_INCLUDE_EDITOR\n')
+                    hpp_out.write('    static void EditorLoad();\n')
+                    hpp_out.write('    void EditorDraw();\n')
+                    hpp_out.write('#endif\n\n')
+
+                    hpp_out.write('    // ----------------------\n')
+                    hpp_out.write('    // Extra Entity Functions\n')
+                    hpp_out.write('    // ----------------------\n\n')
+
+                    hpp_out.write('    // -------------\n')
+                    hpp_out.write('    // Object States\n')
+                    hpp_out.write('    // -------------\n\n')
+
+                    hpp_out.write('    // ------------------\n')
+                    hpp_out.write('    // Object Draw States\n')
+                    hpp_out.write('    // ------------------\n\n')
+
+                    hpp_out.write('    // -------------------\n')
+                    hpp_out.write('    // Static Declarations\n')
+                    hpp_out.write('    // -------------------\n\n')
+                    hpp_out.write(f'    RSDK_DECLARE({self.obj_name})\n')
+
+                    hpp_out.write(f'}};\n')
+                    hpp_out.write(f'}} // namespace {config.OBJECT_NAMESPACE}')
 
                 self.directories.clear()
                 self.main_layout.body = urwid.ListBox(self.main_body)
@@ -260,7 +235,7 @@ struct {self.obj_name} : GameObject::Entity {{
                 self.success_msg_generic()
 
             except Exception as e:
-                self.add_line(f"An error occurred: {str(e)}")
+                self.add_line(f"This wasn't supposed to happen... {str(e)}")
                 self.loopState = self.loop_main_menu
                 self.refresh_main_menu()
     # loop_select_directory -> (self, key)
