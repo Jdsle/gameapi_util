@@ -24,12 +24,13 @@ pip install urwid
   - After creation, you can optionally run `project_update` to generate new `All.cpp` and `All.hpp` files.
 
 ## gameapi_util_cfg
-`gameapi_util_cfg.py` is used for configuring various things, such as - the path to your objects directory. Many options are available:
+`gameapi_util_cfg.py` is used for configuring various things, such as the path to your objects directory. Many options are available:
 ```
 GAME_PATH        = "src"
 OBJECT_PATH_NAME = "Objects"
 ALL_CODE_NAME    = "All.cpp"
 ALL_HEADER_NAME  = "All.hpp"
+GAMEAPI_INC_PATH = "Game.hpp"
 PUB_FNS_PATH     = "PublicFunctions.hpp"
 OBJECT_NAMESPACE = "GameLogic"
 
