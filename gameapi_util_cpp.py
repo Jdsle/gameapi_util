@@ -329,19 +329,17 @@ struct {self.obj_name} : GameObject::Entity {{
             f.write('\n\nusing namespace RSDK;\n\n')
             f.write('#if RETRO_USE_MOD_LOADER\n')
 
-            f.write('namespace RSDK\n{\n')        # namespace RSDK
-            f.write('namespace Mod\n{\n')         # namespace Mod
-
-            f.write('\ntemplate <typename NS, typename Type> inline static void AddPublicFunction(const char *functionName, Type(NS::*functionPtr))\n{\n')
-            f.write('    modTable->AddPublicFunction(functionName, reinterpret_cast<void *&>(functionPtr));\n')
-            f.write('}\n\n')
-
-            f.write('} // namespace Mod\n')       # // namespace Mod
-            f.write('} // namespace RSDK\n\n')    # // namespace RSDK
-
-            f.write('#define ADD_PUBLIC_FUNC(func) RSDK::Mod::AddPublicFunction(#func, &func)\n\n');
+            f.write('#define ADD_PUBLIC_FUNC(func) GameLogic::AddPublicFunction(#func, &func)\n\n');
 
             f.write(f'namespace {config.OBJECT_NAMESPACE}\n{{\n') # namespace GameLogic
+
+            f.write('\ntemplate <typename X, typename Type> inline static void AddPublicFunction(const char *functionName, Type(X::*functionPtr))\n{\n')
+            f.write('    modTable->AddPublicFunction(functionName, reinterpret_cast<void *&>(functionPtr));\n')
+            f.write('}\n')
+
+            f.write('template <typename Type> inline static void AddPublicFunction(const char *functionName, Type(*functionPtr))\n{\n')
+            f.write('    modTable->AddPublicFunction(functionName, reinterpret_cast<void *&>(functionPtr));\n')
+            f.write('}\n')
 
             f.write(f'\nstatic void InitPublicFunctions()\n{{\n')
             for path in Path(config.OBJECT_PATH).rglob("*.hpp"):
