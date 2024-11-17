@@ -42,7 +42,7 @@ ALL_CPP_PATH = f"{OBJECT_PATH}/{ALL_CODE_NAME}"
 ALL_HPP_PATH = f"{GAME_PATH}/{ALL_HEADER_NAME}"
 ```
 
-You can also extend the main menu, with the `init` function. For example:
+You can also extend the main menu with the `init` function. For example:
 ```
 def init(app_in):
     global app
