@@ -232,13 +232,24 @@ class gameapi_util:
                 self.directories.clear()
                 self.main_layout.body = urwid.ListBox(self.main_body)
 
-                self.success_msg_generic()
+                self.add_line(f"Done! Created '{self.obj_name}' in directory '{selected_dir}'.")
+                self.add_line("Would you like to update the CMake project? (Y/N)")
+                self.loopState = self.loop_create_object_update_prompt
 
             except Exception as e:
                 self.add_line(f"This wasn't supposed to happen... {str(e)}")
                 self.loopState = self.loop_main_menu
                 self.refresh_main_menu()
     # loop_select_directory -> (self, key)
+
+    def loop_create_object_update_prompt(self, key):
+        if key in ('y', 'Y'):
+            self.project_update()
+            self.loopState = self.loop_main_menu
+        elif key in ('n', 'N'):
+            self.add_line("Skipped project update. Press any key to return to the main menu.")
+            self.loopState = self.loop_main_menu
+    # loop_create_object_update_prompt -> (self, key)
 
     def loop_wait_for_return(self, key):
         self.loopState = self.loop_main_menu
