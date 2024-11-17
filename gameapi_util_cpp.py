@@ -48,7 +48,6 @@ class v5CPP:
                 break
 
     os.system('cls||clear')
-    print(config.ALL_HPP_PATH)
     # run
 
     def project_update(self):

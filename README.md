@@ -1,4 +1,5 @@
 # gameapi_util
+![Screenshot of the main interface](/screenshots/main.png)
 A simple Python script to assist with managing RSDKv5/U projects.
 
 ## Default Functions
