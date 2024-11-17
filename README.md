@@ -3,6 +3,13 @@ A simple Python script to assist with managing RSDKv5/U projects.
 
 ![Screenshot of the main interface](/screenshots/main.png)
 
+## Dependencies
+
+urwid is used for the console interface. It can be installed using:
+```
+pip install urwid
+```
+
 ## Default Functions
 
 - **Update All.cpp/All.hpp & CMake Project**
@@ -37,13 +44,13 @@ ALL_HPP_PATH = f"{GAME_PATH}/{ALL_HEADER_NAME}"
 
 You can also extend the main menu, with the `init` function. For example:
 ```
-def init(window_in, util_in):
-    global window, util
-    window = window_in
-    util   = util_in
+def init(app_in):
+    global app
+    app = app_in
 
-    util.add_option('Validate objects', ens_obj_valid)
-    util.add_option('Check status', do_status_check)
+    app.add_option('Validate Objects', ens_obj_valid)
+    app.add_option('Check Status', do_status_check)
+# init -> (app_in)
 ```
 
 ![Screenshot of the main interface, after being extended by gameapi_util_cfg.py](/screenshots/main_extended.png)

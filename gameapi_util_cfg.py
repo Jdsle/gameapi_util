@@ -1,5 +1,4 @@
 import os
-import curses
 
 # Use this to exclude default options from the menu.
 # this can be useful if you'd like to make your own
@@ -8,7 +7,7 @@ import curses
 # If you'd prefer to skip some options, but keep
 # specific ones in, you can add them back, via the
 # init function. For example:
-# util.add_option("Update All.cpp/hpp & CMake Project", util.project_update)
+# app.add_option("Update All.cpp/hpp & CMake Project", app.project_update)
 skipDefaultTools = False
 
 # Path configurations. By default, these are used for
@@ -30,11 +29,9 @@ ALL_CPP_PATH = f'{OBJECT_PATH}/{ALL_CODE_NAME}'
 ALL_HPP_PATH = f'{GAME_PATH}/{ALL_HEADER_NAME}'
 
 # Function/Variable definitions
-window = None
-util   = None
+app = None
 
-def init(window_in, util_in):
-    global window, util
-    window = window_in
-    util   = util_in
-# Init
+def init(app_in):
+    global app
+    app = app_in
+# init -> (app_in)
