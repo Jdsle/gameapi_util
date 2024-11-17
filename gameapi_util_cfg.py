@@ -17,6 +17,7 @@ GAME_PATH        = 'src'
 OBJECT_PATH_NAME = 'Objects'
 ALL_CODE_NAME    = 'All.cpp'
 ALL_HEADER_NAME  = 'All.hpp'
+GAMEAPI_INC_PATH = 'Game.hpp'
 PUB_FNS_PATH     = f'{GAME_PATH}/PublicFunctions.hpp'
 OBJECT_NAMESPACE = 'GameLogic'
 
