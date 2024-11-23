@@ -125,10 +125,10 @@ class gameapi_util:
         elif key == 'enter':
             selected_dir = self.directories[self.selection]
             obj_dir = os.path.join(config.OBJECT_PATH, selected_dir)
-            cpp_path = os.path.join(obj_dir, f"{self.obj_name}.cpp")
-            hpp_path = os.path.join(obj_dir, f"{self.obj_name}.hpp")
+            codePath = os.path.join(obj_dir, f"{self.obj_name}.cpp")
+            headerPath = os.path.join(obj_dir, f"{self.obj_name}.hpp")
 
-            if os.path.exists(cpp_path) or os.path.exists(hpp_path):
+            if os.path.exists(codePath) or os.path.exists(headerPath):
                 self.add_line(f"Object '{self.obj_name}' already exists in '{selected_dir}'. Press any key to return to the main menu.")
                 self.main_layout.body = urwid.ListBox(self.main_body)
                 self.selection = 0
@@ -136,7 +136,7 @@ class gameapi_util:
                 return
 
             try:
-                with open(cpp_path, "w") as cpp_out:
+                with open(codePath, "w") as cpp_out:
                     cpp_out.write(f'#include "{config.GAMEAPI_INC_PATH}"\n\n')
                     cpp_out.write('using namespace RSDK;\n\n')
                     cpp_out.write(f'namespace {config.OBJECT_NAMESPACE}\n{{\n\n')
@@ -169,7 +169,7 @@ class gameapi_util:
 
                     cpp_out.write(f'}} // namespace {config.OBJECT_NAMESPACE}')
 
-                with open(hpp_path, "w") as hpp_out:
+                with open(headerPath, "w") as hpp_out:
                     hpp_out.write('#pragma once\n')
                     hpp_out.write(f'#include "{config.GAMEAPI_INC_PATH}"\n\n')
                     hpp_out.write('using namespace RSDK;\n\n')

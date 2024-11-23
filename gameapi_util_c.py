@@ -125,10 +125,10 @@ class gameapi_util:
         elif key == 'enter':
             selected_dir = self.directories[self.selection]
             obj_dir = os.path.join(config.OBJECT_PATH, selected_dir)
-            cpp_path = os.path.join(obj_dir, f"{self.obj_name}.c")
-            hpp_path = os.path.join(obj_dir, f"{self.obj_name}.h")
+            codePath = os.path.join(obj_dir, f"{self.obj_name}.c")
+            headerPath = os.path.join(obj_dir, f"{self.obj_name}.h")
 
-            if os.path.exists(cpp_path) or os.path.exists(hpp_path):
+            if os.path.exists(codePath) or os.path.exists(headerPath):
                 self.add_line(f"Object '{self.obj_name}' already exists in '{selected_dir}'. Press any key to return to the main menu.")
                 self.main_layout.body = urwid.ListBox(self.main_body)
                 self.selection = 0
@@ -138,7 +138,7 @@ class gameapi_util:
             obj_name_up = self.obj_name.upper()
 
             try:
-                with open(cpp_path, "w") as c_out:
+                with open(codePath, "w") as c_out:
                     c_out.write(f'#include "{config.GAMEAPI_INC_PATH}"\n\n')
                     c_out.write(f'Object{self.obj_name} *{self.obj_name};\n\n')
 
@@ -160,7 +160,7 @@ class gameapi_util:
 
                     c_out.write(f'void {self.obj_name}_Serialize(void);\n')
                     
-                with open(hpp_path, "w") as h_out:
+                with open(headerPath, "w") as h_out:
                     h_out.write(f'#ifndef OBJ_{obj_name_up}_H\n')
                     h_out.write(f'#define OBJ_{obj_name_up}_H\n\n')
                     h_out.write(f'#include "{config.GAMEAPI_INC_PATH}"\n\n')
@@ -233,7 +233,7 @@ class gameapi_util:
                 rel_dir = os.path.relpath(dir_, config.OBJECT_PATH)
                 filenames.append(f"{rel_dir}/{file_name}")
 
-            with open(f'{config.GAME_PATH}/{config.ALL_CODE_NAME}', "w") as f:
+            with open(f'{config.OBJECT_PATH}/{config.ALL_CODE_NAME}', "w") as f:
                 f.writelines(f'#include "{f}"\n' for f in filenames if f.endswith(".c") and not f.endswith(config.ALL_CODE_NAME))
 
             obj_forward_decl = [f'typedef struct {os.path.splitext(os.path.basename(f))[0]} {os.path.splitext(os.path.basename(f))[0]};\n' for f in filenames if f.endswith(".h") and not f.endswith(config.ALL_HEADER_NAME)]
@@ -242,7 +242,8 @@ class gameapi_util:
             with open(f'{config.GAME_PATH}/{config.ALL_HEADER_NAME}', "w") as f:
                 f.write('// Forward Declarations\n')
                 f.writelines(obj_forward_decl)
-                f.writelines(f'\n{obj_includes}')
+                f.writelines('\n')
+                f.writelines(obj_includes)
 
         self.add_line(f"Generating {config.CMAKE_PATH}")
         files = [f"${config.GAME_NAME}/{config.OBJECT_PATH_NAME}/" + f + "\n" for f in filenames if f.endswith(".c") and not f.endswith(config.ALL_CODE_NAME)]
