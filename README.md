@@ -24,9 +24,9 @@ pip install urwid
   - After creation, you can optionally run `project_update` to generate new `All.cpp` and `All.hpp` files.
 
 ## Configuration
-To get started, copy an example configuration, tweak it to your needs, and rename the file to `gameapi_util_config.py`.
+`gameapi_util_cfg.py` is used for configuring various things, such as the path to your objects directory.
 
-**Available options for C++**
+**Available options:**
 ```py
 GAME_PATH        = "src"
 OBJECT_PATH_NAME = "Objects"
@@ -41,8 +41,6 @@ CMAKE_PATH = "Objects.cmake"
 GAME_NAME  = "${GAME_NAME}" # The game directory to look into
 
 OBJECT_PATH = f"{GAME_PATH}/{OBJECT_PATH_NAME}"
-ALL_CPP_PATH = f"{OBJECT_PATH}/{ALL_CODE_NAME}"
-ALL_HPP_PATH = f"{GAME_PATH}/{ALL_HEADER_NAME}"
 ```
 
 ## Extending the main menu
