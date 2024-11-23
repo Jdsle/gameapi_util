@@ -264,13 +264,13 @@ class gameapi_util:
                 rel_dir = os.path.relpath(dir_, config.OBJECT_PATH)
                 filenames.append(f"{rel_dir}/{file_name}")
 
-            with open(config.ALL_CPP_PATH, "w") as f:
+            with open(f'{config.OBJECT_PATH}/{config.ALL_CODE_NAME}', "w") as f:
                 f.writelines(f'#include "{f}"\n' for f in filenames if f.endswith(".cpp") and not f.endswith(config.ALL_CODE_NAME))
 
             obj_forward_decl = [f'typedef struct {os.path.splitext(os.path.basename(f))[0]} {os.path.splitext(os.path.basename(f))[0]};\n' for f in filenames if f.endswith(".hpp") and not f.endswith(config.ALL_HEADER_NAME)]
             obj_includes = [f'#include "{config.OBJECT_PATH_NAME}/{f}"\n' for f in filenames if f.endswith(".hpp") and not f.endswith(config.ALL_HEADER_NAME)]
 
-            with open(config.ALL_HPP_PATH, "w") as f:
+            with open(f'{config.GAME_PATH}/{config.ALL_HEADER_NAME}', "w") as f:
                 f.write('#pragma once\n')
                 f.write(f'namespace {config.OBJECT_NAMESPACE}\n{{\n\n')
                 f.writelines(obj_forward_decl)

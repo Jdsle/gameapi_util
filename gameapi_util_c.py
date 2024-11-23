@@ -8,7 +8,7 @@ class gameapi_util:
     def __init__(self):
         self.options = []
         self.selection = 0
-        self.header_text = urwid.Text("gameapi_util (C - WIP!)\n", align='left')
+        self.header_text = urwid.Text("gameapi_util (C)\n", align='left')
         self.footer_text = urwid.Text("Navigate with Up/Down, Enter to select.", align='left')
         self.main_body = urwid.SimpleListWalker([])
         self.main_layout = urwid.Frame(
@@ -233,13 +233,13 @@ class gameapi_util:
                 rel_dir = os.path.relpath(dir_, config.OBJECT_PATH)
                 filenames.append(f"{rel_dir}/{file_name}")
 
-            with open(config.ALL_CPP_PATH, "w") as f:
+            with open(f'{config.GAME_PATH}/{config.ALL_CODE_NAME}', "w") as f:
                 f.writelines(f'#include "{f}"\n' for f in filenames if f.endswith(".c") and not f.endswith(config.ALL_CODE_NAME))
 
             obj_forward_decl = [f'typedef struct {os.path.splitext(os.path.basename(f))[0]} {os.path.splitext(os.path.basename(f))[0]};\n' for f in filenames if f.endswith(".h") and not f.endswith(config.ALL_HEADER_NAME)]
             obj_includes = [f'#include "{config.OBJECT_PATH_NAME}/{f}"\n' for f in filenames if f.endswith(".h") and not f.endswith(config.ALL_HEADER_NAME)]
 
-            with open(config.ALL_HPP_PATH, "w") as f:
+            with open(f'{config.GAME_PATH}/{config.ALL_HEADER_NAME}', "w") as f:
                 f.write('// Forward Declarations\n')
                 f.writelines(obj_forward_decl)
                 f.writelines(f'\n{obj_includes}')

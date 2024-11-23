@@ -23,9 +23,11 @@ pip install urwid
   - Creates a new object in the specified directory.
   - After creation, you can optionally run `project_update` to generate new `All.cpp` and `All.hpp` files.
 
-## gameapi_util_cfg
-`gameapi_util_cfg.py` is used for configuring various things, such as the path to your objects directory. Many options are available:
-```
+## Configuration
+To get started, copy an example configuration, tweak it to your needs, and rename the file to `gameapi_util_config.py`.
+
+**Available options for C++**
+```py
 GAME_PATH        = "src"
 OBJECT_PATH_NAME = "Objects"
 ALL_CODE_NAME    = "All.cpp"
@@ -43,7 +45,8 @@ ALL_CPP_PATH = f"{OBJECT_PATH}/{ALL_CODE_NAME}"
 ALL_HPP_PATH = f"{GAME_PATH}/{ALL_HEADER_NAME}"
 ```
 
-You can also extend the main menu with the `init` function. For example:
+## Extending the main menu
+You can extend the main menu with the `init` function of your configuration file. For example:
 ```
 def init(app_in):
     global app

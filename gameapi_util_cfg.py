@@ -10,9 +10,7 @@ import os
 # app.add_option("Update All.cpp/hpp & CMake Project", app.project_update)
 skipDefaultTools = False
 
-# Path configurations. By default, these are used for
-# generating All.cpp/hpp & Objects.cmake, generating
-# public functions, creating new objects, etc
+# Path configuration
 GAME_PATH        = 'src'
 OBJECT_PATH_NAME = 'Objects'
 ALL_CODE_NAME    = 'All.cpp'
@@ -26,8 +24,6 @@ CMAKE_PATH = 'Objects.cmake'
 GAME_NAME  = '${GAME_NAME}' # The game directory to look into
 
 OBJECT_PATH = f'{GAME_PATH}/{OBJECT_PATH_NAME}'
-ALL_CPP_PATH = f'{OBJECT_PATH}/{ALL_CODE_NAME}'
-ALL_HPP_PATH = f'{GAME_PATH}/{ALL_HEADER_NAME}'
 
 # Function/Variable definitions
 app = None
