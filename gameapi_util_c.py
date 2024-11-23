@@ -125,8 +125,8 @@ class gameapi_util:
         elif key == 'enter':
             selected_dir = self.directories[self.selection]
             obj_dir = os.path.join(config.OBJECT_PATH, selected_dir)
-            cpp_path = os.path.join(obj_dir, f"{self.obj_name}.cpp")
-            hpp_path = os.path.join(obj_dir, f"{self.obj_name}.hpp")
+            cpp_path = os.path.join(obj_dir, f"{self.obj_name}.c")
+            hpp_path = os.path.join(obj_dir, f"{self.obj_name}.h")
 
             if os.path.exists(cpp_path) or os.path.exists(hpp_path):
                 self.add_line(f"Object '{self.obj_name}' already exists in '{selected_dir}'. Press any key to return to the main menu.")
@@ -134,100 +134,68 @@ class gameapi_util:
                 self.selection = 0
                 self.loopState = self.loop_wait_for_return
                 return
+            
+            obj_name_up = self.obj_name.upper()
 
             try:
-                with open(cpp_path, "w") as cpp_out:
-                    cpp_out.write(f'#include "{config.GAMEAPI_INC_PATH}"\n\n')
-                    cpp_out.write('using namespace RSDK;\n\n')
-                    cpp_out.write(f'namespace {config.OBJECT_NAMESPACE}\n{{\n\n')
+                with open(cpp_path, "w") as c_out:
+                    c_out.write(f'#include "{config.GAMEAPI_INC_PATH}"\n\n')
+                    c_out.write(f'Object{self.obj_name} *{self.obj_name};\n\n')
 
-                    cpp_out.write('// -------------------\n')
-                    cpp_out.write('// Object Registration\n')
-                    cpp_out.write('// -------------------\n\n')
-                    cpp_out.write(f'RSDK_REGISTER_OBJECT({self.obj_name});\n\n')
+                    c_out.write(f'void {self.obj_name}_Update(void) {{}}\n\n')
+                    c_out.write(f'void {self.obj_name}_LateUpdate(void) {{}}\n\n')
+                    c_out.write(f'void {self.obj_name}_StaticUpdate(void) {{}}\n\n')
+                    c_out.write(f'void {self.obj_name}_Draw(void) {{}}\n\n')
+                    c_out.write(f'void {self.obj_name}_Create(void* data) {{}}\n\n')
+                    c_out.write(f'void {self.obj_name}_StageLoad(void) {{}}\n\n')
 
-                    cpp_out.write('// -------------\n')
-                    cpp_out.write('// Entity Events\n')
-                    cpp_out.write('// -------------\n\n')
-                    cpp_out.write(f'void {self.obj_name}::Update() {{}}\n\n')
-                    cpp_out.write(f'void {self.obj_name}::LateUpdate() {{}}\n\n')
-                    cpp_out.write(f'void {self.obj_name}::StaticUpdate() {{}}\n\n')
-                    cpp_out.write(f'void {self.obj_name}::Draw() {{}}\n\n')
-                    cpp_out.write(f'void {self.obj_name}::Create(void* data) {{}}\n\n')
-                    cpp_out.write(f'void {self.obj_name}::StageLoad() {{}}\n\n')
+                    c_out.write('#if GAME_INCLUDE_EDITOR\n')
+                    c_out.write(f'void {self.obj_name}_EditorLoad(void) {{}}\n\n')
+                    c_out.write(f'void {self.obj_name}_EditorDraw(void) {{}}\n')
+                    c_out.write('#endif\n')
 
-                    cpp_out.write('#if GAME_INCLUDE_EDITOR\n')
-                    cpp_out.write(f'void {self.obj_name}::EditorLoad() {{}}\n\n')
-                    cpp_out.write(f'void {self.obj_name}::EditorDraw() {{}}\n')
-                    cpp_out.write('#endif\n\n')
+                    c_out.write('#if RETRO_REV0U\n')
+                    c_out.write(f'void {self.obj_name}_StaticLoad(Object{self.obj_name} *sVars) {{ memset(sVars, 0, sizeof(Object{self.obj_name})); }}\n')
+                    c_out.write('#endif\n\n')
 
-                    cpp_out.write('#if RETRO_REV0U\n')
-                    cpp_out.write(f'void {self.obj_name}::StaticLoad(Static* sVars) {{ RSDK_INIT_STATIC_VARS({self.obj_name}); }}\n')
-                    cpp_out.write('#endif\n\n')
+                    c_out.write(f'void {self.obj_name}_Serialize(void);\n')
+                    
+                with open(hpp_path, "w") as h_out:
+                    h_out.write(f'#ifndef OBJ_{obj_name_up}_H\n')
+                    h_out.write(f'#define OBJ_{obj_name_up}_H\n\n')
+                    h_out.write(f'#include "{config.GAMEAPI_INC_PATH}"\n\n')
 
-                    cpp_out.write(f'void {self.obj_name}::Serialize() {{}}\n\n')
+                    h_out.write('// Object Class\n')
+                    h_out.write(f'struct Object{self.obj_name} {{\n')
+                    h_out.write(f'    RSDK_OBJECT\n')
+                    h_out.write(f'}};\n\n')
 
-                    cpp_out.write(f'}} // namespace {config.OBJECT_NAMESPACE}')
+                    h_out.write('// Entity Class\n')
+                    h_out.write(f'struct Entity{self.obj_name} {{\n')
+                    h_out.write(f'    RSDK_ENTITY\n')
+                    h_out.write(f'}};\n\n')
 
-                with open(hpp_path, "w") as hpp_out:
-                    hpp_out.write('#pragma once\n')
-                    hpp_out.write(f'#include "{config.GAMEAPI_INC_PATH}"\n\n')
-                    hpp_out.write('using namespace RSDK;\n\n')
-                    hpp_out.write(f'namespace {config.OBJECT_NAMESPACE}\n{{\n')
-                    hpp_out.write(f'struct {self.obj_name} : GameObject::Entity {{\n\n')
+                    h_out.write('// Object Struct\n')
+                    h_out.write(f'extern Object{self.obj_name} *{self.obj_name};\n\n')
 
-                    hpp_out.write('    // ---------------\n')
-                    hpp_out.write('    // Enums & Structs\n')
-                    hpp_out.write('    // ---------------\n\n')
+                    h_out.write('// Standard Entity Events\n')
+                    h_out.write(f'void {self.obj_name}_Update(void);\n')
+                    h_out.write(f'void {self.obj_name}_LateUpdate(void);\n')
+                    h_out.write(f'void {self.obj_name}_StaticUpdate(void);\n')
+                    h_out.write(f'void {self.obj_name}_Draw(void);\n')
+                    h_out.write(f'void {self.obj_name}_Create(void* data);\n')
+                    h_out.write('#if GAME_INCLUDE_EDITOR\n')
+                    h_out.write(f'void {self.obj_name}_EditorLoad(void);\n')
+                    h_out.write(f'void {self.obj_name}_EditorDraw(void);\n')
+                    h_out.write('#endif\n')
+                    h_out.write(f'void {self.obj_name}_Serialize(void);\n')
+                    h_out.write('#if RETRO_REV0U\n')
+                    h_out.write(f'void {self.obj_name}_StaticLoad(Object{self.obj_name} *sVars);\n')
+                    h_out.write('#endif\n\n')
 
-                    hpp_out.write('    // ----------------\n')
-                    hpp_out.write('    // Static Variables\n')
-                    hpp_out.write('    // ----------------\n\n')
+                    h_out.write('// Extra Entity Functions\n\n')
 
-                    hpp_out.write('    struct Static : GameObject::Static {\n    };\n\n')
-
-                    hpp_out.write('    // ----------------\n')
-                    hpp_out.write('    // Entity Variables\n')
-                    hpp_out.write('    // ----------------\n\n')
-
-                    hpp_out.write('    // ----------------------\n')
-                    hpp_out.write('    // Standard Entity Events\n')
-                    hpp_out.write('    // ----------------------\n\n')
-
-                    hpp_out.write('    void Create(void* data);\n')
-                    hpp_out.write('    void Draw();\n')
-                    hpp_out.write('    void Update();\n')
-                    hpp_out.write('    void LateUpdate();\n')
-                    hpp_out.write('    static void StaticUpdate();\n')
-                    hpp_out.write('    static void StageLoad();\n')
-                    hpp_out.write('#if RETRO_REV0U\n')
-                    hpp_out.write('    static void StaticLoad(Static* sVars);\n')
-                    hpp_out.write('#endif\n')
-                    hpp_out.write('    static void Serialize();\n\n')
-                    hpp_out.write('#if GAME_INCLUDE_EDITOR\n')
-                    hpp_out.write('    static void EditorLoad();\n')
-                    hpp_out.write('    void EditorDraw();\n')
-                    hpp_out.write('#endif\n\n')
-
-                    hpp_out.write('    // ----------------------\n')
-                    hpp_out.write('    // Extra Entity Functions\n')
-                    hpp_out.write('    // ----------------------\n\n')
-
-                    hpp_out.write('    // -------------\n')
-                    hpp_out.write('    // Object States\n')
-                    hpp_out.write('    // -------------\n\n')
-
-                    hpp_out.write('    // ------------------\n')
-                    hpp_out.write('    // Object Draw States\n')
-                    hpp_out.write('    // ------------------\n\n')
-
-                    hpp_out.write('    // -------------------\n')
-                    hpp_out.write('    // Static Declarations\n')
-                    hpp_out.write('    // -------------------\n\n')
-                    hpp_out.write(f'    RSDK_DECLARE({self.obj_name})\n')
-
-                    hpp_out.write(f'}};\n')
-                    hpp_out.write(f'}} // namespace {config.OBJECT_NAMESPACE}')
+                    h_out.write(f'#endif //! OBJ_{obj_name_up}_H')
 
                 self.directories.clear()
                 self.main_layout.body = urwid.ListBox(self.main_body)
