@@ -184,6 +184,7 @@ class gameapi_util:
                     h_out.write(f'void {self.obj_name}_StaticUpdate(void);\n')
                     h_out.write(f'void {self.obj_name}_Draw(void);\n')
                     h_out.write(f'void {self.obj_name}_Create(void* data);\n')
+                    h_out.write(f'void {self.obj_name}_StageLoad(void);\n')
                     h_out.write('#if GAME_INCLUDE_EDITOR\n')
                     h_out.write(f'void {self.obj_name}_EditorLoad(void);\n')
                     h_out.write(f'void {self.obj_name}_EditorDraw(void);\n')
