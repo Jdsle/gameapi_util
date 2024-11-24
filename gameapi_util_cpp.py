@@ -10,7 +10,7 @@ class gameapi_util:
         self.selection = 0
         self.body = urwid.SimpleListWalker([])
         header_txt = urwid.Text("gameapi_util (C++)\n", align='left')
-        footer_txt = urwid.Text("Navigate with Up/Down, Enter to select.", align='left')
+        footer_txt = urwid.Text("Navigate with Up/Down, Enter to select. ⏎", align='left')
         self.layout = urwid.Frame(
             header=urwid.AttrMap(header_txt, None),
             body=urwid.ListBox(self.body),
@@ -92,11 +92,26 @@ class gameapi_util:
             self.state = self.loop_main_menu
             self.refresh_main_menu()
         elif key == 'enter':
+            if not os.path.exists(config.OBJECT_PATH):
+                self.add_line(f"{config.OBJECT_PATH} does not exist. Press any key to return to the main menu.")
+                self.layout.body = urwid.ListBox(self.body)
+                self.selection = 0
+                self.state = self.loop_wait_for_return
+                return
+
+            if not os.path.isdir(config.OBJECT_PATH):
+                self.add_line(f"{config.OBJECT_PATH} is not a directory. Press any key to return to the main menu.")
+                self.layout.body = urwid.ListBox(self.body)
+                self.selection = 0
+                self.state = self.loop_wait_for_return
+                return
+        
             obj_name = self.obj_name_field.get_edit_text()
             if not obj_name:
                 self.add_line("You're gonna need a name for the object.\n")
-                self.state = self.loop_main_menu
-                self.refresh_main_menu()
+                self.layout.body = urwid.ListBox(self.body)
+                self.selection = 0
+                self.state = self.loop_wait_for_return
                 return
 
             self.obj_name = obj_name 
@@ -104,8 +119,9 @@ class gameapi_util:
             self.directories = [d for d in os.listdir(config.OBJECT_PATH) if os.path.isdir(os.path.join(config.OBJECT_PATH, d))]
             if not self.directories:
                 self.add_line("\nNo valid object directories found.\n")
-                self.state = self.loop_main_menu
-                self.refresh_main_menu()
+                self.layout.body = urwid.ListBox(self.body)
+                self.selection = 0
+                self.state = self.loop_wait_for_return
                 return
         
             directory_select_walker = urwid.SimpleListWalker([urwid.Text(f"- {dir_name}") for dir_name in self.directories])
@@ -200,14 +216,14 @@ class gameapi_util:
                     hpp_out.write('    void LateUpdate();\n')
                     hpp_out.write('    static void StaticUpdate();\n')
                     hpp_out.write('    static void StageLoad();\n')
+                    hpp_out.write('#if GAME_INCLUDE_EDITOR\n')
+                    hpp_out.write('    static void EditorLoad();\n')
+                    hpp_out.write('    void EditorDraw();\n')
+                    hpp_out.write('#endif\n')
                     hpp_out.write('#if RETRO_REV0U\n')
                     hpp_out.write('    static void StaticLoad(Static* sVars);\n')
                     hpp_out.write('#endif\n')
                     hpp_out.write('    static void Serialize();\n\n')
-                    hpp_out.write('#if GAME_INCLUDE_EDITOR\n')
-                    hpp_out.write('    static void EditorLoad();\n')
-                    hpp_out.write('    void EditorDraw();\n')
-                    hpp_out.write('#endif\n\n')
 
                     hpp_out.write('    // ----------------------\n')
                     hpp_out.write('    // Extra Entity Functions\n')
