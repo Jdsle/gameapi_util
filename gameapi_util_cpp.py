@@ -294,15 +294,15 @@ class gameapi_util:
                 f.writelines(obj_includes)
 
         self.add_line(f"Generating {config.CMAKE_PATH}")
-        files = [f"\t{config.GAME_NAME}/{config.OBJECT_PATH_NAME}/" + f + "\n" for f in filenames if f.endswith(".cpp") and not f.endswith(config.ALL_CODE_NAME)]
-        with open(config.CMAKE_PATH, "w") as f:
-            f.writelines(["set(GENERATED_SOURCES\n"] + files + [")"])
+        files = [f"\t{config.GAME_NAME}/{config.OBJECT_PATH_NAME}/" + cm + "\n" for cm in filenames if cm.endswith(".cpp") and not cm.endswith(config.ALL_CODE_NAME)]
+        with open(config.CMAKE_PATH, "w") as cm:
+            cm.writelines(["set(GENERATED_SOURCES\n"] + files + [")"])
 
         self.success_msg_generic()
     # project_update -> (self)
 
     def gen_pub_fns(self):
-        self.add_line("WARNING: C++ Public function generation is experimental. Manual fixing may be required")
+        self.add_line("WARNING: Manual fixing may be required for public function generation")
 
         if os.path.exists(config.PUB_FNS_PATH):
             self.add_line(f"\n'{config.PUB_FNS_PATH}' already exists. Overwrite? (Y/N)")
@@ -318,7 +318,7 @@ class gameapi_util:
             self.state = loop_confirm
             return
         
-        self.gen_pub_dns_imp();
+        self.gen_pub_dns_imp()
     # gen_pub_fns -> (self)
 
     def gen_pub_dns_imp(self):
@@ -343,7 +343,7 @@ class gameapi_util:
             f.write('    modTable->AddPublicFunction(functionName, reinterpret_cast<void *&>(functionPtr));\n')
             f.write('}\n')
 
-            f.write(f'\nstatic void InitPublicFunctions()\n{{\n')
+            f.write('\nstatic void InitPublicFunctions()\n{\n')
             for path in Path(config.OBJECT_PATH).rglob("*.hpp"):
                 done = False
                 prepros = ""
@@ -419,7 +419,7 @@ def main():
     app = gameapi_util()
     if config.skipDefaultTools == False:
         app.add_option('Project Update', app.project_update)
-        app.add_option('Generate Public Functions (experimental)', app.gen_pub_fns)
+        app.add_option('Generate Public Functions', app.gen_pub_fns)
         app.add_option('Create Object', app.create_object)
     config.init(app)
     app.add_option("Exit", app.exit_util)

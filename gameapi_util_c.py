@@ -270,8 +270,7 @@ class gameapi_util:
     # project_update -> (self)
 
     def gen_pub_fns(self):
-        self.add_line("Unimplemented.")
-        return
+        self.add_line("WARNING: Manual fixing may be required for public function generation")
     
         if os.path.exists(config.PUB_FNS_PATH):
             self.add_line(f"\n'{config.PUB_FNS_PATH}' already exists. Overwrite? (Y/N)")
@@ -287,13 +286,58 @@ class gameapi_util:
             self.state = loop_confirm
             return
         
-        self.gen_pub_dns_imp();
+        self.gen_pub_dns_imp()
     # gen_pub_fns -> (self)
 
     def gen_pub_dns_imp(self):
         events = ("Update", "LateUpdate", "StaticUpdate", "Draw", "Create", "StageLoad", "EditorDraw", "EditorLoad", "StaticLoad", "Serialize")
-        exclusions = ["TABLE", "STATIC"]
 
+        with open(config.PUB_FNS_PATH, "w") as f:
+            f.write('#define ADD_PUBLIC_FUNC(func) Mod.AddPublicFunction(#func, (void *)(func))\n\n')
+            f.write('void InitPublicFunctions()\n{\n')
+            for path in Path(config.OBJECT_PATH).rglob("*.h"):
+                done = False
+                prepros = ""
+                hasPrepos = False
+                with open(path, "r") as file:
+                    while (line := file.readline()) != "":
+                        if (line != line.lstrip() or line.startswith("//")): 
+                            continue
+                        line = line.rstrip()
+                        if (match := re.fullmatch(r"([a-zA-Z0-9]* ?\**) *([^(]*)\((.*)(,|\);)(\s*\/\/.*)?", line)) != None:
+                            ret, name, args, end, comment = match.groups()
+                            if name[len(path.stem) + 1:] in events:
+                                continue
+                            if (not done): 
+                                f.write(f"    // {path.parent.name}/{path.stem}\n")
+                                done = True
+                                if (prepros == "#endif"):
+                                    prepros = ""
+                                    hasPrepos = False
+                            if prepros and (prepros != "#endif"):
+                                f.write(f"{prepros}\n")
+                                prepros = ""
+                                hasPrepos = True
+                            if (prepros == "#endif" and hasPrepos == True):
+                                f.write(f"{prepros}\n")
+                                prepros = ""
+                                hasPrepos = False
+                            f.write(f"    ADD_PUBLIC_FUNC({name});\n")
+                            if (prepros == "#endif"):
+                                f.write(f"{prepros}\n")
+                                prepros = ""
+                                hasPrepos = False
+                        elif line.startswith("#"):
+                            prepros = line
+                        else:
+                            prepros = ""
+                if (hasPrepos):
+                    f.write("#endif\n")
+                if (done):
+                    f.write('\n')
+            f.write("}\n")
+
+        self.success_msg_generic()
     # gen_pub_fns_imp -> (self)
 
     def gen_static_objs(self):
