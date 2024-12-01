@@ -168,13 +168,13 @@ class gameapi_util:
                     c_out.write('#if GAME_INCLUDE_EDITOR\n')
                     c_out.write(f'void {self.obj_name}_EditorLoad(void) {{}}\n\n')
                     c_out.write(f'void {self.obj_name}_EditorDraw(void) {{}}\n')
-                    c_out.write('#endif\n')
+                    c_out.write('#endif\n\n')
 
                     c_out.write('#if RETRO_REV0U\n')
                     c_out.write(f'void {self.obj_name}_StaticLoad(Object{self.obj_name} *sVars) {{ memset(sVars, 0, sizeof(Object{self.obj_name})); }}\n')
                     c_out.write('#endif\n\n')
 
-                    c_out.write(f'void {self.obj_name}_Serialize(void);\n')
+                    c_out.write(f'void {self.obj_name}_Serialize(void) {{}}\n')
                     
                 with open(headerPath, "w") as h_out:
                     h_out.write(f'#ifndef OBJ_{obj_name_up}_H\n')
@@ -205,10 +205,10 @@ class gameapi_util:
                     h_out.write(f'void {self.obj_name}_EditorLoad(void);\n')
                     h_out.write(f'void {self.obj_name}_EditorDraw(void);\n')
                     h_out.write('#endif\n')
-                    h_out.write(f'void {self.obj_name}_Serialize(void);\n')
                     h_out.write('#if RETRO_REV0U\n')
                     h_out.write(f'void {self.obj_name}_StaticLoad(Object{self.obj_name} *sVars);\n')
-                    h_out.write('#endif\n\n')
+                    h_out.write('#endif\n')
+                    h_out.write(f'void {self.obj_name}_Serialize(void);\n')
 
                     h_out.write('// Extra Entity Functions\n\n')
 
@@ -262,9 +262,9 @@ class gameapi_util:
                 f.writelines(obj_includes)
 
         self.add_line(f"Generating {config.CMAKE_PATH}")
-        files = [f"${config.GAME_NAME}/{config.OBJECT_PATH_NAME}/" + f + "\n" for f in filenames if f.endswith(".c") and not f.endswith(config.ALL_CODE_NAME)]
-        with open(config.CMAKE_PATH, "w") as f:
-            f.writelines(["set(GENERATED_SOURCES\n"] + files + [")"])
+        files = [f"\t{config.GAME_NAME}/{config.OBJECT_PATH_NAME}/" + cm + "\n" for cm in filenames if cm.endswith(".c") and not cm.endswith(config.ALL_CODE_NAME)]
+        with open(config.CMAKE_PATH, "w") as cm:
+            cm.writelines(["set(GENERATED_SOURCES\n"] + files + [")"])
 
         self.success_msg_generic()
     # project_update -> (self)
@@ -272,7 +272,7 @@ class gameapi_util:
     def gen_pub_fns(self):
         self.add_line("Unimplemented.")
         return
-
+    
         if os.path.exists(config.PUB_FNS_PATH):
             self.add_line(f"\n'{config.PUB_FNS_PATH}' already exists. Overwrite? (Y/N)")
             
@@ -317,7 +317,7 @@ def main():
     if config.skipDefaultTools == False:
         app.add_option('Project Update', app.project_update)
         app.add_option('Generate Public Functions', app.gen_pub_fns)
-        app.add_option('Generate Static Objects', app.gen_static_objs)
+        #app.add_option('Generate Static Objects', app.gen_static_objs)
         app.add_option('Create Object', app.create_object)
     config.init(app)
     app.add_option("Exit", app.exit_util)

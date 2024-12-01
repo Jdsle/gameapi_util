@@ -294,7 +294,7 @@ class gameapi_util:
                 f.writelines(obj_includes)
 
         self.add_line(f"Generating {config.CMAKE_PATH}")
-        files = [f"${config.GAME_NAME}/{config.OBJECT_PATH_NAME}/" + f + "\n" for f in filenames if f.endswith(".cpp") and not f.endswith(config.ALL_CODE_NAME)]
+        files = [f"\t{config.GAME_NAME}/{config.OBJECT_PATH_NAME}/" + f + "\n" for f in filenames if f.endswith(".cpp") and not f.endswith(config.ALL_CODE_NAME)]
         with open(config.CMAKE_PATH, "w") as f:
             f.writelines(["set(GENERATED_SOURCES\n"] + files + [")"])
 
