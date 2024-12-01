@@ -10,11 +10,11 @@ class gameapi_util:
         self.selection = 0
         self.body = urwid.SimpleListWalker([])
         header_txt = urwid.Text("gameapi_util (C)\n", align='left')
-        footer_txt = urwid.Text("Navigate with Up/Down, Enter to select. ⏎", align='left')
+        footer_txt = urwid.Text("1.0.0 - Navigate with Up/Down, Enter to select. ⏎", align='left')
         self.layout = urwid.Frame(
             header=urwid.AttrMap(header_txt, None),
             body=urwid.ListBox(self.body),
-            footer=urwid.AttrMap(footer_txt, None),
+            footer=urwid.AttrMap(footer_txt, 'footer'),
         )
         self.obj_name_field = None
         self.directories = []
@@ -25,7 +25,8 @@ class gameapi_util:
         self.refresh_main_menu()
         palette = [
             ('selected', 'standout', ''),
-            ('not_selected', '', '')
+            ('not_selected', '', ''),
+            ('footer', 'dark gray', '')
         ]
         loop = urwid.MainLoop(self.layout, palette=palette, unhandled_input=lambda key: self.state(key))
 
