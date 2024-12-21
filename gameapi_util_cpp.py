@@ -1,8 +1,7 @@
-import os
-import re
-import urwid
-from pathlib import Path
+import os, re, urwid
 import gameapi_util_cfg as config
+
+from pathlib import Path
 
 class gameapi_util:
 
@@ -15,7 +14,7 @@ class gameapi_util:
         self.selection = 0
         self.body = urwid.SimpleListWalker([])
         header_txt = urwid.Text("gameapi_util (C++)\n", align='left')
-        footer_txt = urwid.Text("1.0.0 - Navigate with Up/Down, Enter to select. ⏎", align='left')
+        footer_txt = urwid.Text("1.1.0 - Navigate with Up/Down, Enter to select. ⏎", align='left')
         self.layout = urwid.Frame(
             header=urwid.AttrMap(header_txt, None),
             body=urwid.ListBox(self.body),
@@ -89,7 +88,7 @@ class gameapi_util:
         elif key == 'enter':
             self.body.clear()
             _label = self.options[self.selection]['label']
-            self.add_line(f"> {_label}\n")
+            self.add_line(f"> Selected {_label}\n")
             self.options[self.selection]['onSelectCB']()
         else:
             self.refresh_main_menu()
