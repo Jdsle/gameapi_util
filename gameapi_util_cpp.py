@@ -5,6 +5,11 @@ from pathlib import Path
 import gameapi_util_cfg as config
 
 class gameapi_util:
+
+    ## ---------------
+    ## Menu Functions
+    ## ---------------
+
     def __init__(self):
         self.options = []
         self.selection = 0
@@ -19,7 +24,7 @@ class gameapi_util:
         self.obj_name_field = None
         self.directories = []
         self.state = self.loop_main_menu
-    # __init__ -> (self)
+
 
     def run(self):
         self.refresh_main_menu()
@@ -34,27 +39,27 @@ class gameapi_util:
             loop.run()
         except KeyboardInterrupt:
             pass
-    # run -> (self)
+
 
     def add_line(self, txt):
         self.body.append(urwid.Text(txt))
-    # add_line -> (self, txt)
+
 
     def add_option(self, label, onSelectCB):
         self.options.append({'label': label, 'onSelectCB': onSelectCB})
-    # add_option -> (self, label, onSelectCB)
+
 
     def success_msg_generic(self):
         self.add_line('Done! Press any key to return to the main menu.')
         self.selection = 0
         self.state = self.loop_wait_for_return
-    # success_msg_generic -> (self)
+
 
     def refresh_main_menu(self):
         self.body.clear()
         for i, option in enumerate(self.options):
             self.body.append(self.update_option(option, selected=(i == self.selection)))
-    # refresh_main_menu -> (self)
+
 
     def refresh_obj_dir_menu(self):
         directory_select_walker = urwid.SimpleListWalker(
@@ -63,13 +68,16 @@ class gameapi_util:
             for i, dir_name in enumerate(self.directories)]
         )
         self.layout.body = urwid.ListBox(directory_select_walker)
-    # refresh_obj_dir_menu -> (self)
+
 
     def update_option(self, option, selected=False):
         text = f"> {option['label']}" if selected else f"- {option['label']}"
         attr = 'selected' if selected else 'not_selected'
         return urwid.AttrMap(urwid.Text(text), attr)
-    # update_option -> (self, key)
+
+    ## ---------------
+    ## Menu States
+    ## ---------------
 
     def loop_main_menu(self, key):
         if key in ('up', 'k'):
@@ -85,7 +93,7 @@ class gameapi_util:
             self.options[self.selection]['onSelectCB']()
         else:
             self.refresh_main_menu()
-    # loop_main_menu -> (self, key)
+
 
     def loop_create_object(self, key):
         if key == 'esc':
@@ -106,7 +114,7 @@ class gameapi_util:
                 self.selection = 0
                 self.state = self.loop_wait_for_return
                 return
-        
+
             obj_name = self.obj_name_field.get_edit_text()
             if not obj_name:
                 self.add_line("You're gonna need a name for the object.\n")
@@ -124,13 +132,13 @@ class gameapi_util:
                 self.selection = 0
                 self.state = self.loop_wait_for_return
                 return
-        
+
             directory_select_walker = urwid.SimpleListWalker([urwid.Text(f"- {dir_name}") for dir_name in self.directories])
             self.layout.body = urwid.ListBox(directory_select_walker)
             self.selection = 0
             self.refresh_obj_dir_menu()
             self.state = self.loop_select_directory
-    # loop_create_object -> (self, key)
+
 
     def loop_select_directory(self, key):
         if key in ('up', 'k'):
@@ -257,7 +265,7 @@ class gameapi_util:
                 self.add_line(f"This wasn't supposed to happen... {str(e)}")
                 self.state = self.loop_main_menu
                 self.refresh_main_menu()
-    # loop_select_directory -> (self, key)
+
 
     def loop_create_object_update_prompt(self, key):
         if key in ('y', 'Y'):
@@ -266,12 +274,15 @@ class gameapi_util:
         elif key in ('n', 'N'):
             self.add_line("Skipped project update. Press any key to return to the main menu.")
             self.state = self.loop_main_menu
-    # loop_create_object_update_prompt -> (self, key)
+
 
     def loop_wait_for_return(self, key):
         self.state = self.loop_main_menu
         self.refresh_main_menu()
-    # loop_wait_for_return -> (self, key)
+
+    ## ---------------
+    ## Helpers
+    ## ---------------
 
     def project_update(self):
         filenames = []
@@ -300,14 +311,14 @@ class gameapi_util:
             cm.writelines(["set(GENERATED_SOURCES\n"] + files + [")"])
 
         self.success_msg_generic()
-    # project_update -> (self)
+
 
     def gen_pub_fns(self):
         self.add_line("WARNING: Manual fixing may be required for public function generation")
 
         if os.path.exists(config.PUB_FNS_PATH):
             self.add_line(f"\n'{config.PUB_FNS_PATH}' already exists. Overwrite? (Y/N)")
-            
+
             def loop_confirm(key):
                 if key in ('y', 'Y'):
                     self.gen_pub_dns_imp()
@@ -318,9 +329,9 @@ class gameapi_util:
 
             self.state = loop_confirm
             return
-        
+
         self.gen_pub_dns_imp()
-    # gen_pub_fns -> (self)
+
 
     def gen_pub_dns_imp(self):
         events = ("Update", "LateUpdate", "StaticUpdate", "Draw", "Create", "StageLoad", "EditorDraw", "EditorLoad", "StaticLoad", "Serialize")
@@ -402,7 +413,7 @@ class gameapi_util:
             f.write('#endif')
 
         self.success_msg_generic()
-    # gen_pub_fns_imp -> (self)
+
 
     def create_object(self):
         self.state = self.loop_create_object
@@ -410,11 +421,11 @@ class gameapi_util:
 
         input_body = urwid.SimpleListWalker([urwid.AttrMap(self.obj_name_field, None)])
         self.layout.body = urwid.ListBox(input_body)
-    # create_object -> (self)
+
 
     def exit_util(self):
         raise urwid.ExitMainLoop()
-    # exit_util -> (self)
+
 
 def main():
     app = gameapi_util()
@@ -425,7 +436,6 @@ def main():
     config.init(app)
     app.add_option("Exit", app.exit_util)
     app.run()
-# main -> ()
 
 if __name__ == '__main__':
     main()
