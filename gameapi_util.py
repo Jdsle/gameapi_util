@@ -1,6 +1,6 @@
 import os, re, urwid
 import gameapi_util_cfg as config
-import default_generators as generators
+import util_object as objectutil
 
 from pathlib import Path
 
@@ -13,6 +13,7 @@ class gameapi_util:
     def __init__(self):
         self.options = []
         self.selection = 0
+        self.tempVal = 0
         self.body = urwid.SimpleListWalker([])
         header_txt = urwid.Text("GameAPI-util\n", align='left')
         footer_txt = urwid.Text("1.1.0 - Navigate with Up/Down, Enter to select. ⏎", align='left')
@@ -31,7 +32,8 @@ class gameapi_util:
         palette = [
             ('selected', 'standout', ''),
             ('not_selected', '', ''),
-            ('footer', 'dark gray', '')
+            ('item_disabled', 'dark gray', ''),
+            ('footer', 'dark gray', ''),
         ]
         loop = urwid.MainLoop(self.layout, palette=palette, unhandled_input=lambda key: self.state(key))
 
@@ -49,6 +51,11 @@ class gameapi_util:
         self.options.append({'label': label, 'onSelectCB': onSelectCB})
 
 
+    def add_divider(self, char='-', attr=None):
+        label = char * 20
+        self.options.append({'label': label, 'onSelectCB': None, 'item_skip_select': True, 'attr': 'item_disabled'})
+
+
     def success_msg_generic(self):
         self.add_line('Done! Press any key to return to the main menu.')
         self.selection = 0
@@ -58,7 +65,12 @@ class gameapi_util:
     def refresh_main_menu(self):
         self.body.clear()
         for i, option in enumerate(self.options):
-            self.body.append(self.update_option(option, selected=(i == self.selection)))
+            if option.get('item_skip_select'):
+                divider = urwid.Text(option['label'])
+                attr = option.get('attr', 'not_selected')
+                self.body.append(urwid.AttrMap(divider, attr))
+            else:
+                self.body.append(self.update_option(option, selected=(i == self.selection)))
 
 
     def refresh_obj_dir_menu(self):
@@ -82,15 +94,20 @@ class gameapi_util:
     def loop_main_menu(self, key):
         if key in ('up', 'k'):
             self.selection = (self.selection - 1) % len(self.options)
+            while self.options[self.selection].get('item_skip_select'):
+                self.selection = (self.selection - 1) % len(self.options)
             self.refresh_main_menu()
         elif key in ('down', 'j'):
             self.selection = (self.selection + 1) % len(self.options)
+            while self.options[self.selection].get('item_skip_select'):
+                self.selection = (self.selection + 1) % len(self.options)
             self.refresh_main_menu()
         elif key == 'enter':
-            self.body.clear()
-            _label = self.options[self.selection]['label']
-            self.add_line(f"> Selected {_label}\n")
-            self.options[self.selection]['onSelectCB']()
+            if not self.options[self.selection].get('item_skip_select'):
+                self.body.clear()
+                _label = self.options[self.selection]['label']
+                self.add_line(f"> Selected {_label}\n")
+                self.options[self.selection]['onSelectCB']()
         else:
             self.refresh_main_menu()
 
@@ -161,10 +178,11 @@ class gameapi_util:
                 return
 
             try:
-                generators.new_cpp_object(self.obj_name, codePath, generators.modes.default)
-                generators.new_cpp_object_header(self.obj_name, headerPath, generators.modes.default)
+                objectutil.new_cpp_object(self.obj_name, codePath, self.tempVal)
+                objectutil.new_cpp_object_header(self.obj_name, headerPath, self.tempVal)
 
                 self.directories.clear()
+                self.tempVal = 0
                 self.layout.body = urwid.ListBox(self.body)
 
                 self.add_line(f"Done! Created '{self.obj_name}' in directory '{selected_dir}'.")
@@ -325,9 +343,10 @@ class gameapi_util:
         self.success_msg_generic()
 
 
-    def create_object(self):
+    def create_object(self, mode=objectutil.modes.default):
         self.state = self.loop_create_object
         self.obj_name_field = urwid.Edit("Object Name: ")
+        self.tempVal = mode
 
         input_body = urwid.SimpleListWalker([urwid.AttrMap(self.obj_name_field, None)])
         self.layout.body = urwid.ListBox(input_body)
@@ -342,9 +361,16 @@ def main():
     if config.skipDefaultTools == False:
         app.add_option('Project Update', app.project_update)
         app.add_option('Generate Public Functions', app.gen_pub_fns)
-        app.add_option('Create Object', app.create_object)
+        app.add_divider()
+        app.add_option('New C++ Object [default]', lambda: app.create_object(objectutil.modes.default))
+        app.add_option('New C++ Object [clean]', lambda: app.create_object(objectutil.modes.clean))
+        app.add_option('New C++ Object [mod]', lambda: app.create_object(objectutil.modes.modded))
+        app.add_option('New C++ Object [mod & clean]', lambda: app.create_object(objectutil.modes.modded_clean))
+
     config.init(app)
-    generators.init(app)
+    objectutil.init(app)
+
+    app.add_divider()
     app.add_option("Exit", app.exit_util)
     app.run()
 
