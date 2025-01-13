@@ -374,6 +374,110 @@ void {obj_name}_Serialize(void);
 #endif //! OBJ_{obj_name_up}_H
 '''
 
+##
+## C modded object header
+##
+
+mod_c_object_header = '''#ifndef OBJ_{obj_name_up}_H
+#define OBJ_{obj_name_up}_H
+
+#include "{gameapi_inc_path}"
+
+// Object Class
+typedef struct {{
+    RSDK_OBJECT
+}} Object{obj_name};
+
+
+// Modded Object Class
+typedef struct {{
+}} Object{obj_name};
+
+
+// Entity Class
+typedef struct {{
+    RSDK_ENTITY
+}} Entity{obj_name};
+
+// Object Struct
+extern Object{obj_name} *{obj_name};
+extern ModObject{obj_name} *Mod_{obj_name};
+
+// Standard Entity Events
+void {obj_name}_Update(void);
+void {obj_name}_LateUpdate(void);
+void {obj_name}_StaticUpdate(void);
+void {obj_name}_Draw(void);
+void {obj_name}_Create(void *data);
+void {obj_name}_StageLoad(void);
+#if GAME_INCLUDE_EDITOR
+void {obj_name}_EditorLoad(void);
+void {obj_name}_EditorDraw(void);
+#endif
+void {obj_name}_Serialize(void);
+
+// Extra Entity Functions
+
+#endif //! OBJ_{obj_name_up}_H
+'''
+
+##
+## C object header, without any predefined entity events
+##
+
+clean_c_object_header = '''#ifndef OBJ_{obj_name_up}_H
+#define OBJ_{obj_name_up}_H
+
+#include "{gameapi_inc_path}"
+
+// Object Class
+struct Object{obj_name} {{
+    RSDK_OBJECT
+}};
+
+
+// Entity Class
+struct Entity{obj_name} {{
+    RSDK_ENTITY
+}};
+
+// Object Struct
+extern Object{obj_name} *{obj_name};
+
+#endif //! OBJ_{obj_name_up}_H
+'''
+
+##
+## C modded object header, without any predefined entity events
+##
+
+clean_mod_c_object_header = '''#ifndef OBJ_{obj_name_up}_H
+#define OBJ_{obj_name_up}_H
+
+#include "{gameapi_inc_path}"
+
+// Object Class
+typedef struct {{
+    RSDK_OBJECT
+}} Object{obj_name};
+
+
+// Modded Object Class
+typedef struct {{
+}} Object{obj_name};
+
+
+// Entity Class
+typedef struct {{
+    RSDK_ENTITY
+}} Entity{obj_name};
+
+// Object Struct
+extern Object{obj_name} *{obj_name};
+extern ModObject{obj_name} *Mod_{obj_name};
+
+#endif //! OBJ_{obj_name_up}_H
+'''
 
 # General
 def init(app_in):
@@ -472,15 +576,47 @@ def new_cpp_object_header(name, directory, mode):
     except Exception as e:
         app.add_line(f"Error during file generation: {str(e)}")
 
-def cpp_public_functions():
-    return
-
 # C generators
-def new_c_object(name):
+def new_c_object(name, directory, mode):
     return
 
-def new_c_object_header(name):
-    return
+def new_c_object_header(name, directory, mode):
+    directory_validate(directory)
 
-def c_public_functions():
-    return
+    if os.path.exists(directory):
+        app.add_line(f"Object '{name}' already exists in '{directory}'.")
+        return
+
+    try:
+        formatted_header = ""
+
+        if mode == modes.default:
+            formatted_header = c_object_header.format(
+                gameapi_inc_path=config.GAMEAPI_INC_PATH,
+                obj_name=name,
+                obj_name_up=name.upper()
+            )
+        elif mode == modes.clean:
+            formatted_header = clean_c_object_header.format(
+                gameapi_inc_path=config.GAMEAPI_INC_PATH,
+                obj_name=name,
+                obj_name_up=name.upper()
+            )
+        elif mode == modes.modded:
+            formatted_header = mod_c_object_header.format(
+                gameapi_inc_path=config.GAMEAPI_INC_PATH,
+                obj_name=name,
+                obj_name_up=name.upper()
+            )
+        elif mode == modes.modded_clean:
+            formatted_header = clean_mod_c_object_header.format(
+                gameapi_inc_path=config.GAMEAPI_INC_PATH,
+                obj_name=name,
+                obj_name_up=name.upper()
+            )
+
+        with open(directory, "w") as out:
+            out.write(formatted_header)
+
+    except Exception as e:
+        app.add_line(f"Error during file generation: {str(e)}")

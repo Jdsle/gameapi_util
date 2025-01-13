@@ -1,4 +1,4 @@
-import os, re, urwid
+import os, re, urwid, webbrowser
 import gameapi_util_cfg as config
 import util_object as objectutil
 
@@ -11,9 +11,12 @@ class gameapi_util:
     ## ---------------
 
     def __init__(self):
+        self.tempVal = 0
+        self.tempVal2 = 0
+        self.language = None
+
         self.options = []
         self.selection = 0
-        self.tempVal = 0
         self.body = urwid.SimpleListWalker([])
         header_txt = urwid.Text("GameAPI-util\n", align='left')
         footer_txt = urwid.Text("1.1.0 - Navigate with Up/Down, Enter to select. ⏎", align='left')
@@ -167,8 +170,16 @@ class gameapi_util:
         elif key == 'enter':
             selected_dir = self.directories[self.selection]
             object_dir = os.path.join(config.OBJECT_PATH, selected_dir)
-            codePath = os.path.join(object_dir, f"{self.obj_name}.cpp")
-            headerPath = os.path.join(object_dir, f"{self.obj_name}.hpp")
+
+            codePath = ""
+            headerPath = ""
+
+            if self.tempVal2 == 0: # C++
+                codePath = os.path.join(object_dir, f"{self.obj_name}.c")
+                headerPath = os.path.join(object_dir, f"{self.obj_name}.h")
+            elif self.tempVal2 == 1: # C
+                codePath = os.path.join(object_dir, f"{self.obj_name}.c")
+                headerPath = os.path.join(object_dir, f"{self.obj_name}.h")
 
             if os.path.exists(codePath) or os.path.exists(headerPath):
                 self.add_line(f"Object '{self.obj_name}' already exists in '{selected_dir}'. Press any key to return to the main menu.")
@@ -178,11 +189,16 @@ class gameapi_util:
                 return
 
             try:
-                objectutil.new_cpp_object(self.obj_name, codePath, self.tempVal)
-                objectutil.new_cpp_object_header(self.obj_name, headerPath, self.tempVal)
+                if self.tempVal2 == 0: # C++
+                    objectutil.new_cpp_object(self.obj_name, codePath, self.tempVal)
+                    objectutil.new_cpp_object_header(self.obj_name, headerPath, self.tempVal)
+                elif self.tempVal2 == 1: # C
+                    objectutil.new_c_object(self.obj_name, codePath, self.tempVal)
+                    objectutil.new_c_object_header(self.obj_name, headerPath, self.tempVal)
 
                 self.directories.clear()
                 self.tempVal = 0
+                self.tempVal2 = 0
                 self.layout.body = urwid.ListBox(self.body)
 
                 self.add_line(f"Done! Created '{self.obj_name}' in directory '{selected_dir}'.")
@@ -343,13 +359,20 @@ class gameapi_util:
         self.success_msg_generic()
 
 
-    def create_object(self, mode=objectutil.modes.default):
+    def create_object(self, language, mode=objectutil.modes.default):
         self.state = self.loop_create_object
         self.obj_name_field = urwid.Edit("Object Name: ")
         self.tempVal = mode
+        self.tempVal2 = language
 
         input_body = urwid.SimpleListWalker([urwid.AttrMap(self.obj_name_field, None)])
         self.layout.body = urwid.ListBox(input_body)
+
+
+    def web_github_repo(self):
+        webbrowser.open("https://github.com/Jdsle/gameapi_util")
+        self.state = self.loop_main_menu
+        self.refresh_main_menu()
 
 
     def exit_util(self):
@@ -362,15 +385,21 @@ def main():
         app.add_option('Project Update', app.project_update)
         app.add_option('Generate Public Functions', app.gen_pub_fns)
         app.add_divider()
-        app.add_option('New C++ Object [default]', lambda: app.create_object(objectutil.modes.default))
-        app.add_option('New C++ Object [clean]', lambda: app.create_object(objectutil.modes.clean))
-        app.add_option('New C++ Object [mod]', lambda: app.create_object(objectutil.modes.modded))
-        app.add_option('New C++ Object [mod & clean]', lambda: app.create_object(objectutil.modes.modded_clean))
+        app.add_option('New C++ Object [default]', lambda: app.create_object(0, objectutil.modes.default))
+        app.add_option('New C++ Object [clean]', lambda: app.create_object(0, objectutil.modes.clean))
+        app.add_option('New C++ Object [mod]', lambda: app.create_object(0, objectutil.modes.modded))
+        app.add_option('New C++ Object [mod & clean]', lambda: app.create_object(0, objectutil.modes.modded_clean))
+        app.add_divider()
+        app.add_option('New C Object [default]', lambda: app.create_object(1, objectutil.modes.default))
+        app.add_option('New C Object [clean]', lambda: app.create_object(1, objectutil.modes.clean))
+        app.add_option('New C Object [mod]', lambda: app.create_object(1, objectutil.modes.modded))
+        app.add_option('New C Object [mod & clean]', lambda: app.create_object(1, objectutil.modes.modded_clean))
 
     config.init(app)
     objectutil.init(app)
 
     app.add_divider()
+    app.add_option("Github Repo", app.web_github_repo)
     app.add_option("Exit", app.exit_util)
     app.run()
 
