@@ -161,8 +161,8 @@ class gameapi_util:
                 return
 
             try:
-                generators.new_cpp_object(self.obj_name, codePath)
-                generators.new_cpp_object_header(self.obj_name, headerPath)
+                generators.new_cpp_object(self.obj_name, codePath, generators.modes.default)
+                generators.new_cpp_object_header(self.obj_name, headerPath, generators.modes.default)
 
                 self.directories.clear()
                 self.layout.body = urwid.ListBox(self.body)

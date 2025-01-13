@@ -1,8 +1,15 @@
 import os
 import gameapi_util_cfg as config
+from enum import Enum
 
 # Function/Variable definitions
 app = None
+
+class modes(Enum):
+    default      = 0
+    clean        = 1
+    modded       = 2
+    modded_clean = 3
 
 ##
 ## C++ object
@@ -379,7 +386,7 @@ def directory_validate(directory):
         os.makedirs(directory_path)
 
 # C++ generators
-def new_cpp_object(name, directory):
+def new_cpp_object(name, directory, mode):
     directory_validate(directory)
 
     if os.path.exists(directory):
@@ -387,12 +394,36 @@ def new_cpp_object(name, directory):
         return
 
     try:
-        formatted_object = cpp_object.format(
-            gameapi_inc_path=config.GAMEAPI_INC_PATH,
-            namespace=config.OBJECT_NAMESPACE,
-            obj_name=name,
-            regtype="RSDK_REGISTER_OBJECT"
-        )
+        formatted_object = ""
+
+        if mode == modes.default:
+            formatted_object = cpp_object.format(
+                gameapi_inc_path=config.GAMEAPI_INC_PATH,
+                namespace=config.OBJECT_NAMESPACE,
+                obj_name=name,
+                regtype="RSDK_REGISTER_OBJECT"
+            )
+        elif mode == modes.clean:
+            formatted_object = clean_cpp_object.format(
+                gameapi_inc_path=config.GAMEAPI_INC_PATH,
+                namespace=config.OBJECT_NAMESPACE,
+                obj_name=name,
+                regtype="RSDK_REGISTER_OBJECT"
+            )
+        elif mode == modes.modded:
+            formatted_object = cpp_object.format(
+                gameapi_inc_path=config.GAMEAPI_INC_PATH,
+                namespace=config.OBJECT_NAMESPACE,
+                obj_name=name,
+                regtype="MOD_REGISTER_OBJECT"
+            )
+        elif mode == modes.modded_clean:
+            formatted_object = clean_cpp_object.format(
+                gameapi_inc_path=config.GAMEAPI_INC_PATH,
+                namespace=config.OBJECT_NAMESPACE,
+                obj_name=name,
+                regtype="MOD_REGISTER_OBJECT"
+            )
 
         with open(directory, "w") as out:
             out.write(formatted_object)
@@ -400,7 +431,7 @@ def new_cpp_object(name, directory):
     except Exception as e:
         app.add_line(f"Error during file generation: {str(e)}")
 
-def new_cpp_object_header(name, directory):
+def new_cpp_object_header(name, directory, mode):
     directory_validate(directory)
 
     if os.path.exists(directory):
@@ -408,11 +439,32 @@ def new_cpp_object_header(name, directory):
         return
 
     try:
-        formatted_header = cpp_object_header.format(
-            gameapi_inc_path=config.GAMEAPI_INC_PATH,
-            namespace=config.OBJECT_NAMESPACE,
-            obj_name=name
-        )
+        formatted_header = ""
+
+        if mode == modes.default:
+            formatted_header = cpp_object_header.format(
+                gameapi_inc_path=config.GAMEAPI_INC_PATH,
+                namespace=config.OBJECT_NAMESPACE,
+                obj_name=name
+            )
+        elif mode == modes.clean:
+            formatted_header = clean_cpp_object_header.format(
+                gameapi_inc_path=config.GAMEAPI_INC_PATH,
+                namespace=config.OBJECT_NAMESPACE,
+                obj_name=name
+            )
+        elif mode == modes.modded:
+            formatted_header = mod_cpp_object_header.format(
+                gameapi_inc_path=config.GAMEAPI_INC_PATH,
+                namespace=config.OBJECT_NAMESPACE,
+                obj_name=name
+            )
+        elif mode == modes.modded_clean:
+            formatted_header = clean_mod_cpp_object_header.format(
+                gameapi_inc_path=config.GAMEAPI_INC_PATH,
+                namespace=config.OBJECT_NAMESPACE,
+                obj_name=name
+            )
 
         with open(directory, "w") as out:
             out.write(formatted_header)
