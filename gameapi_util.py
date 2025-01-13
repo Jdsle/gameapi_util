@@ -1,6 +1,9 @@
-import os, re, urwid, webbrowser
+import os, sys, re, urwid, webbrowser
+
 import gameapi_util_cfg as config
+
 import util_object as objectutil
+import util_project as projectutil
 
 from pathlib import Path
 
@@ -13,12 +16,11 @@ class gameapi_util:
     def __init__(self):
         self.tempVal = 0
         self.tempVal2 = 0
-        self.language = None
 
         self.options = []
-        self.selection = 0
+        self.selection = 1
         self.body = urwid.SimpleListWalker([])
-        header_txt = urwid.Text("GameAPI-util\n", align='left')
+        header_txt = urwid.Text("gameapi_util\n", align='left')
         footer_txt = urwid.Text("1.1.0 - Navigate with Up/Down, Enter to select. ⏎", align='left')
         self.layout = urwid.Frame(
             header=urwid.AttrMap(header_txt, None),
@@ -29,13 +31,12 @@ class gameapi_util:
         self.directories = []
         self.state = self.loop_main_menu
 
-
     def run(self):
         self.refresh_main_menu()
         palette = [
             ('selected', 'standout', ''),
             ('not_selected', '', ''),
-            ('item_disabled', 'dark gray', ''),
+            ('item_disabled', 'light gray', ''),
             ('footer', 'dark gray', ''),
         ]
         loop = urwid.MainLoop(self.layout, palette=palette, unhandled_input=lambda key: self.state(key))
@@ -45,24 +46,27 @@ class gameapi_util:
         except KeyboardInterrupt:
             pass
 
+    def set_terminal_progress(self, state, progress):
+        # https://learn.microsoft.com/en-us/windows/terminal/tutorials/progress-bar-sequences
+        # 0 is the default state, and indicates that the progress bar should be hidden. Use this state when the command is complete, to clear out any progress state.
+        # 1: set progress value to <progress>, in the "default" state.
+        # 2: set progress value to <progress>, in the "Error" state
+        # 3: set the taskbar to the "Indeterminate" state. This is useful for commands that don't have a progress value, but are still running. This state ignores the <progress> value.
+        # 4: set progress value to <progress>, in the "Warning" state
+
+        progress = max(0, min(100, progress))
+        sys.stdout.write(f"\x1b]9;4;{state};{progress}\x07")
+        sys.stdout.flush()
+
 
     def add_line(self, txt):
         self.body.append(urwid.Text(txt))
 
-
     def add_option(self, label, onSelectCB):
         self.options.append({'label': label, 'onSelectCB': onSelectCB})
 
-
-    def add_divider(self, char='-', attr=None):
-        label = char * 20
-        self.options.append({'label': label, 'onSelectCB': None, 'item_skip_select': True, 'attr': 'item_disabled'})
-
-
-    def success_msg_generic(self):
-        self.add_line('Done! Press any key to return to the main menu.')
-        self.selection = 0
-        self.state = self.loop_wait_for_return
+    def add_label(self, label='', attr=None):
+        self.options.append({'label': label, 'onSelectCB': None, 'item_skip_select': True})
 
 
     def refresh_main_menu(self):
@@ -74,7 +78,6 @@ class gameapi_util:
                 self.body.append(urwid.AttrMap(divider, attr))
             else:
                 self.body.append(self.update_option(option, selected=(i == self.selection)))
-
 
     def refresh_obj_dir_menu(self):
         directory_select_walker = urwid.SimpleListWalker(
@@ -90,11 +93,19 @@ class gameapi_util:
         attr = 'selected' if selected else 'not_selected'
         return urwid.AttrMap(urwid.Text(text), attr)
 
+    def success_msg_generic(self):
+        self.set_terminal_progress(0, 0)
+        self.add_line('Done! Press any key to return to the main menu.')
+        self.selection = 1
+        self.state = self.loop_wait_for_return
+
     ## ---------------
     ## Menu States
     ## ---------------
 
     def loop_main_menu(self, key):
+        self.set_terminal_progress(0, 0)
+
         if key in ('up', 'k'):
             self.selection = (self.selection - 1) % len(self.options)
             while self.options[self.selection].get('item_skip_select'):
@@ -114,32 +125,34 @@ class gameapi_util:
         else:
             self.refresh_main_menu()
 
-
     def loop_create_object(self, key):
         if key == 'esc':
-            self.selection = 0
+            self.selection = 1
             self.state = self.loop_main_menu
             self.refresh_main_menu()
         elif key == 'enter':
             if not os.path.exists(config.OBJECT_PATH):
+                self.set_terminal_progress(2, 100)
                 self.add_line(f"{config.OBJECT_PATH} does not exist. Press any key to return to the main menu.")
                 self.layout.body = urwid.ListBox(self.body)
-                self.selection = 0
+                self.selection = 1
                 self.state = self.loop_wait_for_return
                 return
 
             if not os.path.isdir(config.OBJECT_PATH):
+                self.set_terminal_progress(2, 100)
                 self.add_line(f"{config.OBJECT_PATH} is not a directory. Press any key to return to the main menu.")
                 self.layout.body = urwid.ListBox(self.body)
-                self.selection = 0
+                self.selection = 1
                 self.state = self.loop_wait_for_return
                 return
 
             obj_name = self.obj_name_field.get_edit_text()
             if not obj_name:
-                self.add_line("You're gonna need a name for the object.\n")
+                self.set_terminal_progress(4, 100)
+                self.add_line("No name was provided. Press any key to return to the main menu.")
                 self.layout.body = urwid.ListBox(self.body)
-                self.selection = 0
+                self.selection = 1
                 self.state = self.loop_wait_for_return
                 return
 
@@ -147,18 +160,18 @@ class gameapi_util:
 
             self.directories = [d for d in os.listdir(config.OBJECT_PATH) if os.path.isdir(os.path.join(config.OBJECT_PATH, d))]
             if not self.directories:
+                self.set_terminal_progress(2, 100)
                 self.add_line("No valid object directories found.")
                 self.layout.body = urwid.ListBox(self.body)
-                self.selection = 0
+                self.selection = 1
                 self.state = self.loop_wait_for_return
                 return
 
             directory_select_walker = urwid.SimpleListWalker([urwid.Text(f"- {dir_name}") for dir_name in self.directories])
             self.layout.body = urwid.ListBox(directory_select_walker)
-            self.selection = 0
+            self.selection = 1
             self.refresh_obj_dir_menu()
             self.state = self.loop_select_directory
-
 
     def loop_select_directory(self, key):
         if key in ('up', 'k'):
@@ -175,8 +188,8 @@ class gameapi_util:
             headerPath = ""
 
             if self.tempVal2 == 0: # C++
-                codePath = os.path.join(object_dir, f"{self.obj_name}.c")
-                headerPath = os.path.join(object_dir, f"{self.obj_name}.h")
+                codePath = os.path.join(object_dir, f"{self.obj_name}.cpp")
+                headerPath = os.path.join(object_dir, f"{self.obj_name}.hpp")
             elif self.tempVal2 == 1: # C
                 codePath = os.path.join(object_dir, f"{self.obj_name}.c")
                 headerPath = os.path.join(object_dir, f"{self.obj_name}.h")
@@ -184,7 +197,7 @@ class gameapi_util:
             if os.path.exists(codePath) or os.path.exists(headerPath):
                 self.add_line(f"Object '{self.obj_name}' already exists in '{selected_dir}'. Press any key to return to the main menu.")
                 self.layout.body = urwid.ListBox(self.body)
-                self.selection = 0
+                self.selection = 1
                 self.state = self.loop_wait_for_return
                 return
 
@@ -206,19 +219,17 @@ class gameapi_util:
                 self.state = self.loop_create_object_update_prompt
 
             except Exception as e:
+                self.set_terminal_progress(2, 100)
                 self.add_line(f"This wasn't supposed to happen... {str(e)}")
                 self.state = self.loop_main_menu
-                self.refresh_main_menu()
-
 
     def loop_create_object_update_prompt(self, key):
         if key in ('y', 'Y'):
             self.project_update()
             self.state = self.loop_main_menu
-        elif key in ('n', 'N'):
-            self.add_line("Skipped project update. Press any key to return to the main menu.")
+        else:
             self.state = self.loop_main_menu
-
+            self.refresh_main_menu()
 
     def loop_wait_for_return(self, key):
         self.state = self.loop_main_menu
@@ -257,7 +268,7 @@ class gameapi_util:
         self.success_msg_generic()
 
 
-    def gen_pub_fns(self):
+    def gen_pub_fns(self, mode=0):
         self.add_line("WARNING: Manual fixing may be required for public function generation")
 
         if os.path.exists(config.PUB_FNS_PATH):
@@ -265,99 +276,25 @@ class gameapi_util:
 
             def loop_confirm(key):
                 if key in ('y', 'Y'):
-                    self.gen_pub_dns_imp()
+                    self.gen_pub_dns_imp(mode)
                 elif key in ('n', 'N'):
-                    self.selection = 0
+                    self.selection = 1
                     self.state = self.loop_main_menu
                     self.refresh_main_menu()
 
             self.state = loop_confirm
             return
 
-        self.gen_pub_dns_imp()
+        self.gen_pub_dns_imp(mode)
 
+    def gen_pub_dns_imp(self, mode):
+        self.set_terminal_progress(3, 0)
 
-    def gen_pub_dns_imp(self):
-        events = ("Update", "LateUpdate", "StaticUpdate", "Draw", "Create", "StageLoad", "EditorDraw", "EditorLoad", "StaticLoad", "Serialize")
-        exclusions = ["*", "_DECLARE"]
-
-        with open(config.PUB_FNS_PATH, "w") as f:
-            f.write('#pragma once\n')
-            f.write(f'#include "{config.GAMEAPI_INC_PATH}"')
-            f.write('\n\nusing namespace RSDK;\n\n')
-            f.write('#if RETRO_USE_MOD_LOADER\n')
-
-            f.write('#define ADD_PUBLIC_FUNC(func) GameLogic::AddPublicFunction(#func, &func)\n\n');
-
-            f.write(f'namespace {config.OBJECT_NAMESPACE}\n{{\n') # namespace GameLogic
-
-            f.write('\ntemplate <typename X, typename Type> inline static void AddPublicFunction(const char *functionName, Type(X::*functionPtr))\n{\n')
-            f.write('    modTable->AddPublicFunction(functionName, reinterpret_cast<void *&>(functionPtr));\n')
-            f.write('}\n')
-
-            f.write('template <typename Type> inline static void AddPublicFunction(const char *functionName, Type(*functionPtr))\n{\n')
-            f.write('    modTable->AddPublicFunction(functionName, reinterpret_cast<void *&>(functionPtr));\n')
-            f.write('}\n')
-
-            f.write('\nstatic void InitPublicFunctions()\n{\n')
-            for path in Path(config.OBJECT_PATH).rglob("*.hpp"):
-                done = False
-                prepros = ""
-                hasPrepos = False
-                with open(path, "r") as file:
-                    for line in file:
-                        line = line.rstrip()
-                        if (match := re.fullmatch(r"\s*(?:static )?([a-zA-Z0-9:<>]* ?\**) *([a-zA-Z0-9_]*)\((.*)(?:,|\);)(?:\s*\/\/.*)?", line)) != None:
-                            ret_type, name, args = match.groups()
-                            ret_type = ret_type.strip()
-                            name = name.strip()
-
-                            for exclusion in exclusions:
-                                name = name.replace(exclusion, '')
-                            name = name.strip()
-
-                            if name in events or not name:
-                                continue
-
-                            if (not done):
-                                f.write(f"    // {path.parent.name}/{path.stem}\n")
-                                done = True
-                                if (prepros == "#endif"):
-                                    prepros = ""
-                                    hasPrepos = False
-
-                            if prepros and (prepros != "#endif"):
-                                f.write(f"{prepros}\n")
-                                prepros = ""
-                                hasPrepos = True
-
-                            if (prepros == "#endif" and hasPrepos == True):
-                                f.write(f"{prepros}\n")
-                                prepros = ""
-                                hasPrepos = False
-
-                            f.write(f"    ADD_PUBLIC_FUNC({path.stem}::{name});\n")
-
-                            if prepros == "#endif":
-                                f.write(f"{prepros}\n")
-                                prepros = ""
-                                hasPrepos = False
-                        elif line.startswith("#"):
-                            prepros = line
-                        else:
-                            prepros = ""
-
-                if hasPrepos:
-                    f.write("#endif\n")
-                if done:
-                    f.write("\n")
-
-            f.write("} // static void InitPublicFunctions\n\n")
-            f.write(f'}} // namespace {config.OBJECT_NAMESPACE}\n\n')    # // namespace GameLogic
-            f.write('#endif')
-
+        if mode == 0: # C++
+            projectutil.cpp_public_functions()
+        elif mode == 1:
+            projectutil.c_public_functions()
         self.success_msg_generic()
-
 
     def create_object(self, language, mode=objectutil.modes.default):
         self.state = self.loop_create_object
@@ -368,39 +305,44 @@ class gameapi_util:
         input_body = urwid.SimpleListWalker([urwid.AttrMap(self.obj_name_field, None)])
         self.layout.body = urwid.ListBox(input_body)
 
-
     def web_github_repo(self):
         webbrowser.open("https://github.com/Jdsle/gameapi_util")
         self.state = self.loop_main_menu
         self.refresh_main_menu()
 
-
     def exit_util(self):
+        self.set_terminal_progress(0, 0)
         raise urwid.ExitMainLoop()
 
 
 def main():
     app = gameapi_util()
+
     if config.skipDefaultTools == False:
+        app.add_label("[C++ Tools]")
         app.add_option('Project Update', app.project_update)
-        app.add_option('Generate Public Functions', app.gen_pub_fns)
-        app.add_divider()
-        app.add_option('New C++ Object [default]', lambda: app.create_object(0, objectutil.modes.default))
-        app.add_option('New C++ Object [clean]', lambda: app.create_object(0, objectutil.modes.clean))
-        app.add_option('New C++ Object [mod]', lambda: app.create_object(0, objectutil.modes.modded))
-        app.add_option('New C++ Object [mod & clean]', lambda: app.create_object(0, objectutil.modes.modded_clean))
-        app.add_divider()
-        app.add_option('New C Object [default]', lambda: app.create_object(1, objectutil.modes.default))
-        app.add_option('New C Object [clean]', lambda: app.create_object(1, objectutil.modes.clean))
-        app.add_option('New C Object [mod]', lambda: app.create_object(1, objectutil.modes.modded))
-        app.add_option('New C Object [mod & clean]', lambda: app.create_object(1, objectutil.modes.modded_clean))
+        app.add_option('Generate Public Functions', lambda: app.gen_pub_fns(0))
+        app.add_option('New Object [default]', lambda: app.create_object(0, objectutil.modes.default))
+        app.add_option('New Object [clean]', lambda: app.create_object(0, objectutil.modes.clean))
+        app.add_option('New Object [mod]', lambda: app.create_object(0, objectutil.modes.modded))
+        app.add_option('New Object [mod & clean]', lambda: app.create_object(0, objectutil.modes.modded_clean))
+        app.add_label()
+        app.add_label("[C Tools]")
+        app.add_option('Project Update', app.project_update)
+        app.add_option('Generate Public Functions', lambda: app.gen_pub_fns(1))
+        app.add_option('New Object [default]', lambda: app.create_object(1, objectutil.modes.default))
+        app.add_option('New Object [clean]', lambda: app.create_object(1, objectutil.modes.clean))
+        app.add_option('New Object [mod]', lambda: app.create_object(1, objectutil.modes.modded))
+        app.add_option('New Object [mod & clean]', lambda: app.create_object(1, objectutil.modes.modded_clean))
+        app.add_label()
 
     config.init(app)
     objectutil.init(app)
+    projectutil.init(app)
 
-    app.add_divider()
     app.add_option("Github Repo", app.web_github_repo)
     app.add_option("Exit", app.exit_util)
+
     app.run()
 
 if __name__ == '__main__':
