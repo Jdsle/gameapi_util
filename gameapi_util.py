@@ -1,11 +1,7 @@
-import os, sys, re, urwid, webbrowser
-
-import gameapi_util_cfg as config
-
+import urwid, webbrowser, os, sys
 import util_object as objectutil
 import util_project as projectutil
-
-from pathlib import Path
+import gameapi_util_cfg as config
 
 class gameapi_util:
 
@@ -127,7 +123,7 @@ class gameapi_util:
 
     def loop_create_object(self, key):
         if key == 'esc':
-            self.selection = 1
+            self.selection = 0
             self.state = self.loop_main_menu
             self.refresh_main_menu()
         elif key == 'enter':
@@ -169,7 +165,7 @@ class gameapi_util:
 
             directory_select_walker = urwid.SimpleListWalker([urwid.Text(f"- {dir_name}") for dir_name in self.directories])
             self.layout.body = urwid.ListBox(directory_select_walker)
-            self.selection = 1
+            self.selection = 0
             self.refresh_obj_dir_menu()
             self.state = self.loop_select_directory
 
@@ -239,29 +235,50 @@ class gameapi_util:
     ## Helpers
     ## ---------------
 
-    def project_update(self):
+    def project_update(self, mode=0):
         filenames = []
         self.add_line(f'Generating {config.ALL_CODE_NAME}, {config.ALL_HEADER_NAME}')
+
+        codeExtension = ""
+        headerExtension = ""
+        if mode == 0: # C++
+            codeExtension = ".cpp"
+            headerExtension = ".hpp"
+        elif mode == 1:
+            codeExtension = ".c"
+            headerExtension = ".h"
+
         for dir_, _, files in os.walk(config.OBJECT_PATH):
             for file_name in files:
                 rel_dir = os.path.relpath(dir_, config.OBJECT_PATH)
                 filenames.append(f"{rel_dir}/{file_name}")
 
             with open(f'{config.OBJECT_PATH}/{config.ALL_CODE_NAME}', "w") as f:
-                f.writelines(f'#include "{f}"\n' for f in filenames if f.endswith(".cpp") and not f.endswith(config.ALL_CODE_NAME))
+                f.writelines(f'#include "{f}"\n' for f in filenames if f.endswith(codeExtension) and not f.endswith(config.ALL_CODE_NAME))
 
-            obj_forward_decl = [f'struct {os.path.splitext(os.path.basename(f))[0]};\n' for f in filenames if f.endswith(".hpp") and not f.endswith(config.ALL_HEADER_NAME)]
-            obj_includes = [f'#include "{config.OBJECT_PATH_NAME}/{f}"\n' for f in filenames if f.endswith(".hpp") and not f.endswith(config.ALL_HEADER_NAME)]
+            add = ""
+            if mode == 1:
+                add = "typedef "
 
-            with open(f'{config.GAME_PATH}/{config.ALL_HEADER_NAME}', "w") as f:
-                f.write('#pragma once\n')
-                f.write(f'namespace {config.OBJECT_NAMESPACE}\n{{\n\n')
-                f.writelines(obj_forward_decl)
-                f.write(f'\n}} // namespace {config.OBJECT_NAMESPACE}\n\n')
-                f.writelines(obj_includes)
+            obj_forward_decl = [add + f'struct {os.path.splitext(os.path.basename(f))[0]};\n' for f in filenames if f.endswith(headerExtension) and not f.endswith(config.ALL_HEADER_NAME)]
+            obj_includes = [f'#include "{config.OBJECT_PATH_NAME}/{f}"\n' for f in filenames if f.endswith(headerExtension) and not f.endswith(config.ALL_HEADER_NAME)]
+
+            if mode == 0: # C++
+                with open(f'{config.GAME_PATH}/{config.ALL_HEADER_NAME}', "w") as f:
+                    f.write('#pragma once\n')
+                    f.write(f'namespace {config.OBJECT_NAMESPACE}\n{{\n\n')
+                    f.writelines(obj_forward_decl)
+                    f.write(f'\n}} // namespace {config.OBJECT_NAMESPACE}\n\n')
+                    f.writelines(obj_includes)
+            elif mode == 1: # C
+                with open(f'{config.GAME_PATH}/{config.ALL_HEADER_NAME}', "w") as f:
+                    f.write('// Forward Declarations\n')
+                    f.writelines(obj_forward_decl)
+                    f.writelines('\n')
+                    f.writelines(obj_includes)
 
         self.add_line(f"Generating {config.CMAKE_PATH}")
-        files = [f"\t{config.GAME_NAME}/{config.OBJECT_PATH_NAME}/" + cm + "\n" for cm in filenames if cm.endswith(".cpp") and not cm.endswith(config.ALL_CODE_NAME)]
+        files = [f"\t{config.GAME_NAME}/{config.OBJECT_PATH_NAME}/" + cm + "\n" for cm in filenames if cm.endswith(headerExtension) and not cm.endswith(config.ALL_CODE_NAME)]
         with open(config.CMAKE_PATH, "w") as cm:
             cm.writelines(["set(GENERATED_SOURCES\n"] + files + [")"])
 
@@ -292,7 +309,7 @@ class gameapi_util:
 
         if mode == 0: # C++
             projectutil.cpp_public_functions()
-        elif mode == 1:
+        elif mode == 1: # C
             projectutil.c_public_functions()
         self.success_msg_generic()
 
@@ -320,20 +337,20 @@ def main():
 
     if config.skipDefaultTools == False:
         app.add_label("[C++ Tools]")
-        app.add_option('Project Update', app.project_update)
+        app.add_option('Project Update', lambda: app.project_update(0))
         app.add_option('Generate Public Functions', lambda: app.gen_pub_fns(0))
         app.add_option('New Object [default]', lambda: app.create_object(0, objectutil.modes.default))
         app.add_option('New Object [clean]', lambda: app.create_object(0, objectutil.modes.clean))
-        app.add_option('New Object [mod]', lambda: app.create_object(0, objectutil.modes.modded))
-        app.add_option('New Object [mod & clean]', lambda: app.create_object(0, objectutil.modes.modded_clean))
+        app.add_option('New Object [modded]', lambda: app.create_object(0, objectutil.modes.modded))
+        app.add_option('New Object [modded][clean]', lambda: app.create_object(0, objectutil.modes.modded_clean))
         app.add_label()
         app.add_label("[C Tools]")
-        app.add_option('Project Update', app.project_update)
+        app.add_option('Project Update', lambda: app.project_update(1))
         app.add_option('Generate Public Functions', lambda: app.gen_pub_fns(1))
         app.add_option('New Object [default]', lambda: app.create_object(1, objectutil.modes.default))
         app.add_option('New Object [clean]', lambda: app.create_object(1, objectutil.modes.clean))
-        app.add_option('New Object [mod]', lambda: app.create_object(1, objectutil.modes.modded))
-        app.add_option('New Object [mod & clean]', lambda: app.create_object(1, objectutil.modes.modded_clean))
+        app.add_option('New Object [modded]', lambda: app.create_object(1, objectutil.modes.modded))
+        app.add_option('New Object [modded][clean]', lambda: app.create_object(1, objectutil.modes.modded_clean))
         app.add_label()
 
     config.init(app)
