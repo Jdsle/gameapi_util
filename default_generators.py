@@ -284,6 +284,90 @@ struct {obj_name} : GameObject::Entity {{
 }} // namespace {namespace}
 '''
 
+##
+## C object
+##
+
+c_object = '''#include "{gameapi_inc_path}"
+
+Object{obj_name} *{obj_name};
+
+void {obj_name}_Update(void) {{}}
+
+void {obj_name}_LateUpdate(void) {{}}
+
+void {obj_name}_StaticUpdate(void) {{}}
+
+void {obj_name}_Draw(void) {{}}
+
+void {obj_name}_Create(void *data) {{}}
+
+void {obj_name}_StageLoad(void) {{}}
+
+#if GAME_INCLUDE_EDITOR
+void {obj_name}_EditorLoad(void) {{}}
+
+void {obj_name}_EditorDraw(void) {{}}
+#endif
+
+#if RETRO_REV0U
+void {obj_name}_StaticLoad(Object{obj_name} *sVars) {{ RSDK_INIT_STATIC_VARS({obj_name}); }}
+#endif
+
+void {obj_name}_Serialize(void) {{}}
+'''
+
+##
+## C object, without any predefined entity events
+##
+
+clean_c_object = '''#include "{gameapi_inc_path}"
+
+Object{obj_name} *{obj_name};
+'''
+
+##
+## C object header
+##
+
+c_object_header = '''#ifndef OBJ_{obj_name_up}_H
+#define OBJ_{obj_name_up}_H
+
+#include "{gameapi_inc_path}"
+
+// Object Class
+struct Object{obj_name} {{
+    RSDK_OBJECT
+}};
+
+
+// Entity Class
+struct Entity{obj_name} {{
+    RSDK_ENTITY
+}};
+
+// Object Struct
+extern Object{obj_name} *{obj_name};
+
+// Standard Entity Events
+void {obj_name}_Update(void);
+void {obj_name}_LateUpdate(void);
+void {obj_name}_StaticUpdate(void);
+void {obj_name}_Draw(void);
+void {obj_name}_Create(void *data);
+void {obj_name}_StageLoad(void);
+#if GAME_INCLUDE_EDITOR
+void {obj_name}_EditorLoad(void);
+void {obj_name}_EditorDraw(void);
+#endif
+void {obj_name}_Serialize(void);
+
+// Extra Entity Functions
+
+#endif //! OBJ_{obj_name_up}_H
+'''
+
+
 # General
 def init(app_in):
     global app
