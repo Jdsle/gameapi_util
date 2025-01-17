@@ -58,7 +58,7 @@ def init(app_in):
     global app
     app = app_in
 
-    app.add_label("[Custom Tools]")
+    app.add_label('[Custom Tools]')
     app.add_option('Validate Objects', object_validity_check)
     app.add_option('Check Status', project_status_check)
     app.spacer()
