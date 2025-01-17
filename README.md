@@ -12,16 +12,24 @@ pip install urwid
 
 ## Default Functions
 
-- **Update All.cpp/All.hpp & CMake Project**
-  - This function generates `All.cpp` & `All.hpp` includes and `Objects.cmake`.
-  - Forward declarations are included in the header.
+- **Project Update**
+  - Generates `All.c/All.cpp`, which can be used in your Visual Studio or CMake project. This can speed up build times by compiling every object at once, instead of compiling them separately.
+  - Generates `Objects.cmake`, which can be used instead of `All.c/All.cpp`, if you'd like to build the objects separately.
 
 - **Generate public functions**
-  - This function generates `PublicFunctions.hpp`. Entity events are not included.
+  - Generates public functions for the RSDKv5U decompilation's modding API. Entity events are not included.
 
-- **Create new object**
+- **New Object** [default]
   - Creates a new object in the specified directory.
-  - After creation, you can optionally run `project_update` to generate new `All.cpp` and `All.hpp` files.
+
+- **New Object** [clean]
+  - Same as above, without any predefined entity events.
+
+- **New Object** [modded]
+  - Creates a new modded object in the specified directory.
+
+- **New Object** [modded][clean]
+  - Same as above, without any predefined entity events.
 
 ## Configuration
 `gameapi_util_cfg.py` is used for configuring various things, such as the path to your objects directory.
@@ -44,14 +52,16 @@ OBJECT_PATH = f"{GAME_PATH}/{OBJECT_PATH_NAME}"
 ```
 
 ## Extending the main menu
-You can extend the main menu with the `init` function of your configuration file. For example:
-```
+You can extend the main menu with the `init` function of your project's configuration file. For example:
+```py
 def init(app_in):
     global app
     app = app_in
 
-    app.add_option('Validate Objects', ens_obj_valid)
-    app.add_option('Check Status', do_status_check)
+    app.add_label("[Custom Tools]")
+    app.add_option('Validate Objects', object_validity_check)
+    app.add_option('Check Status', project_status_check)
+    app.spacer()
 # init -> (app_in)
 ```
 
