@@ -1116,11 +1116,13 @@ class gameapi_util:
             with open(f'{config.OBJECT_PATH}/{config.ALL_CODE_NAME}', "w") as f:
                 f.writelines(f'#include "{f}"\n' for f in filenames if f.endswith(codeExtension) and not f.endswith(config.ALL_CODE_NAME))
 
-            add = ""
-            if mode == 1: # C
-                add = "typedef "
+            obj_forward_decl = [
+                f'typedef struct {name} {name};\n' if mode == 1 else f'struct {name};\n'
+                for f in filenames 
+                if f.endswith(headerExtension) and not f.endswith(config.ALL_HEADER_NAME)
+                for name in [os.path.splitext(os.path.basename(f))[0]]
+            ]
 
-            obj_forward_decl = [add + f'struct {os.path.splitext(os.path.basename(f))[0]};\n' for f in filenames if f.endswith(headerExtension) and not f.endswith(config.ALL_HEADER_NAME)]
             obj_includes = [f'#include "{config.OBJECT_PATH_NAME}/{f}"\n' for f in filenames if f.endswith(headerExtension) and not f.endswith(config.ALL_HEADER_NAME)]
 
             if mode == 0: # C++
