@@ -1117,8 +1117,8 @@ class gameapi_util:
                 f.writelines(f'#include "{f}"\n' for f in filenames if f.endswith(codeExtension) and not f.endswith(config.ALL_CODE_NAME))
 
             obj_forward_decl = [
-                f'typedef struct {name} {name};\n' if mode == 1 else f'struct {name};\n'
-                for f in filenames 
+                f'typedef struct Object{name} Object{name};\ntypedef struct Entity{name} Entity{name};\n' if mode == 1 else f'struct {name};\n'
+                for f in filenames
                 if f.endswith(headerExtension) and not f.endswith(config.ALL_HEADER_NAME)
                 for name in [os.path.splitext(os.path.basename(f))[0]]
             ]
