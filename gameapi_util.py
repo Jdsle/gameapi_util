@@ -1066,8 +1066,6 @@ class gameapi_util:
                     new_c_object_header(self.obj_name, headerPath, self.tempVal)
 
                 self.directories.clear()
-                self.tempVal = 0
-                self.tempVal2 = 0
                 self.layout.body = urwid.ListBox(self.body)
 
                 self.add_line(f"Done! Created '{self.obj_name}' in directory '{selected_dir}'.")
@@ -1081,9 +1079,13 @@ class gameapi_util:
 
     def loop_create_object_update_prompt(self, key):
         if key in ('y', 'Y'):
-            self.project_update()
+            self.project_update(self.tempVal2)
+            self.tempVal = 0
+            self.tempVal2 = 0
             self.state = self.loop_main_menu
         else:
+            self.tempVal = 0
+            self.tempVal2 = 0
             self.state = self.loop_main_menu
             self.menu_refresh_main()
 
