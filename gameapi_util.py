@@ -1,4 +1,4 @@
-import urwid, webbrowser, os, sys, re
+import urwid, os, sys, re
 import gameapi_util_cfg as config
 from enum import Enum
 from pathlib import Path
@@ -15,6 +15,26 @@ class objectutil_modes(Enum):
     clean        = 1
     modded       = 2
     modded_clean = 3
+
+class menuutil_listbox(urwid.ListBox):
+    def __init__(self, body):
+        super().__init__(body)
+        self.rows = 0
+
+    def keypress(self, size, key):
+        if key in ('up', 'down', 'k', 'j'):
+            return key
+        return super().keypress(size, key)
+
+    def render(self, size, focus=False):
+        canvas = super().render(size, focus)
+        self.rows = canvas.rows()
+        return canvas
+
+    def scroll(self, selection):
+        if selection < self.focus_position or selection >= self.focus_position + self.rows:
+            self.set_focus(selection)
+
 
 ##
 ## C++ object
@@ -846,11 +866,11 @@ class gameapi_util:
         self.selection = 1
         self.body = urwid.SimpleListWalker([])
         header_txt = urwid.Text("gameapi_util\n", align='left')
-        footer_txt = urwid.Text("1.1.0 - Navigate with Up/Down, Enter to select. ⏎", align='left')
+        footer_txt = urwid.Text("1.1.0.1 - Navigate with Up/Down, Enter to select. ⏎", align='left')
 
         self.layout = urwid.Frame(
             header=urwid.AttrMap(header_txt, None),
-            body=urwid.ListBox(self.body),
+            body=menuutil_listbox(self.body),
             footer=urwid.AttrMap(footer_txt, 'footer'),
         )
 
@@ -947,7 +967,7 @@ class gameapi_util:
                         'selected' if i == self.selection else 'not_selected')
             for i, dir_name in enumerate(self.directories)]
         )
-        self.layout.body = urwid.ListBox(directory_select_walker)
+        self.layout.body = menuutil_listbox(directory_select_walker)
 
     def success_msg_generic(self):
         self.set_terminal_progress(0, 0)
@@ -967,11 +987,13 @@ class gameapi_util:
             while self.options[self.selection].get('item_skip_select'):
                 self.selection = (self.selection - 1) % len(self.options)
             self.menu_refresh_main()
+            self.layout.body.scroll(self.selection)
         elif key in ('down', 'j'):
             self.selection = (self.selection + 1) % len(self.options)
             while self.options[self.selection].get('item_skip_select'):
                 self.selection = (self.selection + 1) % len(self.options)
             self.menu_refresh_main()
+            self.layout.body.scroll(self.selection)
         elif key == 'enter':
             if not self.options[self.selection].get('item_skip_select'):
                 self.body.clear()
@@ -990,7 +1012,7 @@ class gameapi_util:
             if not os.path.exists(config.OBJECT_PATH):
                 self.set_terminal_progress(2, 100)
                 self.add_line(f"{config.OBJECT_PATH} does not exist. Press any key to return to the main menu.")
-                self.layout.body = urwid.ListBox(self.body)
+                self.layout.body = menuutil_listbox(self.body)
                 self.selection = 1
                 self.state = self.loop_wait_for_return
                 return
@@ -998,7 +1020,7 @@ class gameapi_util:
             if not os.path.isdir(config.OBJECT_PATH):
                 self.set_terminal_progress(2, 100)
                 self.add_line(f"{config.OBJECT_PATH} is not a directory. Press any key to return to the main menu.")
-                self.layout.body = urwid.ListBox(self.body)
+                self.layout.body = menuutil_listbox(self.body)
                 self.selection = 1
                 self.state = self.loop_wait_for_return
                 return
@@ -1007,7 +1029,7 @@ class gameapi_util:
             if not obj_name:
                 self.set_terminal_progress(4, 100)
                 self.add_line("No name was provided. Press any key to return to the main menu.")
-                self.layout.body = urwid.ListBox(self.body)
+                self.layout.body = menuutil_listbox(self.body)
                 self.selection = 1
                 self.state = self.loop_wait_for_return
                 return
@@ -1018,13 +1040,13 @@ class gameapi_util:
             if not self.directories:
                 self.set_terminal_progress(2, 100)
                 self.add_line(f"No valid object directories found. Please create a subdirectory in {config.OBJECT_PATH}")
-                self.layout.body = urwid.ListBox(self.body)
+                self.layout.body = menuutil_listbox(self.body)
                 self.selection = 1
                 self.state = self.loop_wait_for_return
                 return
 
             directory_select_walker = urwid.SimpleListWalker([urwid.Text(f"- {dir_name}") for dir_name in self.directories])
-            self.layout.body = urwid.ListBox(directory_select_walker)
+            self.layout.body = menuutil_listbox(directory_select_walker)
             self.selection = 0
             self.menu_refresh_objects()
             self.state = self.loop_select_directory
@@ -1033,9 +1055,11 @@ class gameapi_util:
         if key in ('up', 'k'):
             self.selection = (self.selection - 1) % len(self.directories)
             self.menu_refresh_objects()
+            self.layout.body.scroll(self.selection)
         elif key in ('down', 'j'):
             self.selection = (self.selection + 1) % len(self.directories)
             self.menu_refresh_objects()
+            self.layout.body.scroll(self.selection)
         elif key == 'enter':
             selected_dir = self.directories[self.selection]
             object_dir = os.path.join(config.OBJECT_PATH, selected_dir)
@@ -1052,7 +1076,7 @@ class gameapi_util:
 
             if os.path.exists(codePath) or os.path.exists(headerPath):
                 self.add_line(f"Object '{self.obj_name}' already exists in '{selected_dir}'. Press any key to return to the main menu.")
-                self.layout.body = urwid.ListBox(self.body)
+                self.layout.body = menuutil_listbox(self.body)
                 self.selection = 1
                 self.state = self.loop_wait_for_return
                 return
@@ -1066,7 +1090,7 @@ class gameapi_util:
                     new_c_object_header(self.obj_name, headerPath, self.tempVal)
 
                 self.directories.clear()
-                self.layout.body = urwid.ListBox(self.body)
+                self.layout.body = menuutil_listbox(self.body)
 
                 self.add_line(f"Done! Created '{self.obj_name}' in directory '{selected_dir}'.")
                 self.add_line("Would you like to update the CMake project? (Y/N)")
@@ -1190,7 +1214,7 @@ class gameapi_util:
             urwid.AttrMap(self.obj_name_field, None),
             dir_lbl
         ])
-        self.layout.body = urwid.ListBox(input_body)
+        self.layout.body = menuutil_listbox(input_body)
 
     def exit_util(self):
         self.set_terminal_progress(0, 0)
