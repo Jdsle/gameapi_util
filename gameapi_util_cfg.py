@@ -24,6 +24,8 @@ CMAKE_PATH = 'Objects.cmake'
 GAME_NAME  = '${GAME_NAME}' # The game directory to look into
 
 OBJECT_PATH = f'{GAME_PATH}/{OBJECT_PATH_NAME}'
+ALL_CODE_PATH = f'{OBJECT_PATH}/{ALL_CODE_NAME}'
+ALL_HEADER_PATH = f'{GAME_PATH}/{ALL_HEADER_NAME}'
 
 # Function/Variable definitions
 app = None

@@ -1139,7 +1139,7 @@ class gameapi_util:
                 rel_dir = os.path.relpath(dir_, config.OBJECT_PATH)
                 filenames.append(f"{rel_dir}/{file_name}")
 
-            with open(f'{config.OBJECT_PATH}/{config.ALL_CODE_NAME}', "w") as f:
+            with open(config.ALL_CODE_PATH, "w") as f:
                 f.writelines(f'#include "{f}"\n' for f in filenames if f.endswith(codeExtension) and not f.endswith(config.ALL_CODE_NAME))
 
             obj_forward_decl = [
@@ -1152,14 +1152,14 @@ class gameapi_util:
             obj_includes = [f'#include "{config.OBJECT_PATH_NAME}/{f}"\n' for f in filenames if f.endswith(headerExtension) and not f.endswith(config.ALL_HEADER_NAME)]
 
             if mode == 0: # C++
-                with open(f'{config.GAME_PATH}/{config.ALL_HEADER_NAME}', "w") as f:
+                with open(config.ALL_HEADER_PATH, "w") as f:
                     f.write('#pragma once\n')
                     f.write(f'namespace {config.OBJECT_NAMESPACE}\n{{\n\n')
                     f.writelines(obj_forward_decl)
                     f.write(f'\n}} // namespace {config.OBJECT_NAMESPACE}\n\n')
                     f.writelines(obj_includes)
             elif mode == 1: # C
-                with open(f'{config.GAME_PATH}/{config.ALL_HEADER_NAME}', "w") as f:
+                with open(config.ALL_HEADER_PATH, "w") as f:
                     f.write('// Forward Declarations\n')
                     f.writelines(obj_forward_decl)
                     f.writelines('\n')
