@@ -7,8 +7,12 @@ import os
 # If you'd prefer to skip some options, but keep
 # specific ones in, you can add them back, via the
 # init function. For example:
-# app.add_option("Update All.cpp/hpp & CMake Project", app.project_update)
+# app.add_option("Project Update", lambda: app.project_update(0))
 skipDefaultTools = False
+
+# Use this to only show default options for one coding language.
+# 0 = Show all, 1 = C, 2 = C++
+language = 0
 
 # Path configuration
 GAME_PATH        = 'src'
@@ -19,7 +23,7 @@ GAMEAPI_INC_PATH = 'Game.hpp'
 PUB_FNS_PATH     = f'{GAME_PATH}/PublicFunctions.hpp'
 OBJECT_NAMESPACE = 'GameLogic'
 
-# cmake configuration
+# CMake configuration
 CMAKE_PATH = 'Objects.cmake'
 GAME_NAME  = '${GAME_NAME}' # The game directory to look into
 
@@ -31,4 +35,3 @@ app = None
 def init(app_in):
     global app
     app = app_in
-# init -> (app_in)
