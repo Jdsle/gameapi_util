@@ -1139,8 +1139,16 @@ class gameapi_util:
                 rel_dir = os.path.relpath(dir_, config.OBJECT_PATH)
                 filenames.append(f"{rel_dir}/{file_name}")
 
-            with open(f'{config.OBJECT_PATH}/{config.ALL_CODE_NAME}', "w") as f:
-                f.writelines(f'#include "{f}"\n' for f in filenames if f.endswith(codeExtension) and not f.endswith(config.ALL_CODE_NAME))
+            obj_rel_dir = '' if os.path.dirname(config.ALL_CODE_PATH) == config.OBJECT_PATH else os.path.relpath(config.OBJECT_PATH, os.path.dirname(config.ALL_CODE_PATH)).replace("\\","/") + '/'
+            obj_includes = [
+                f'#include "{name}"\n'
+                for f in filenames
+                if f.endswith(codeExtension) and not f.endswith(config.ALL_CODE_NAME)
+                for name in [obj_rel_dir + f]
+            ]
+
+            with open(config.ALL_CODE_PATH, "w") as f:
+                f.writelines(obj_includes)
 
             obj_forward_decl = [
                 f'typedef struct Object{name} Object{name};\ntypedef struct Entity{name} Entity{name};\n' if mode == 1 else f'struct {name};\n'
@@ -1149,17 +1157,23 @@ class gameapi_util:
                 for name in [os.path.splitext(os.path.basename(f))[0]]
             ]
 
-            obj_includes = [f'#include "{config.OBJECT_PATH_NAME}/{f}"\n' for f in filenames if f.endswith(headerExtension) and not f.endswith(config.ALL_HEADER_NAME)]
+            obj_rel_dir = '' if os.path.dirname(config.ALL_HEADER_PATH) == config.OBJECT_PATH else os.path.relpath(config.OBJECT_PATH, os.path.dirname(config.ALL_HEADER_PATH)).replace("\\","/") + '/'
+            obj_includes = [
+                f'#include "{name}"\n'
+                for f in filenames
+                if f.endswith(headerExtension) and not f.endswith(config.ALL_HEADER_NAME)
+                for name in [obj_rel_dir + f]
+            ]
 
             if mode == 0: # C++
-                with open(f'{config.GAME_PATH}/{config.ALL_HEADER_NAME}', "w") as f:
+                with open(config.ALL_HEADER_PATH, "w") as f:
                     f.write('#pragma once\n')
                     f.write(f'namespace {config.OBJECT_NAMESPACE}\n{{\n\n')
                     f.writelines(obj_forward_decl)
                     f.write(f'\n}} // namespace {config.OBJECT_NAMESPACE}\n\n')
                     f.writelines(obj_includes)
             elif mode == 1: # C
-                with open(f'{config.GAME_PATH}/{config.ALL_HEADER_NAME}', "w") as f:
+                with open(config.ALL_HEADER_PATH, "w") as f:
                     f.write('// Forward Declarations\n')
                     f.writelines(obj_forward_decl)
                     f.writelines('\n')
