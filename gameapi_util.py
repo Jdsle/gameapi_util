@@ -1239,11 +1239,18 @@ def main():
     app = gameapi_util()
 
     if config.skipDefaultTools == False:
-        app.menu_add_cpp_tools()
-        app.spacer()
+        if config.language == 0:
+            app.menu_add_cpp_tools()
+            app.spacer()
 
-        app.menu_add_c_tools()
-        app.spacer()
+            app.menu_add_c_tools()
+            app.spacer()
+        elif config.language == 1:
+            app.menu_add_c_tools()
+            app.spacer()
+        elif config.language == 2:
+            app.menu_add_cpp_tools()
+            app.spacer()
 
     config.init(app)
     app.add_option("Exit", app.exit_util)
