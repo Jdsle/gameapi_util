@@ -22,7 +22,7 @@ class menuutil_listbox(urwid.ListBox):
         self.rows = 0
 
     def keypress(self, size, key):
-        if key in ('up', 'down', 'k', 'j'):
+        if key in ('up', 'down'):
             return key
         return super().keypress(size, key)
 
@@ -982,13 +982,13 @@ class gameapi_util:
     def loop_main_menu(self, key):
         self.set_terminal_progress(0, 0)
 
-        if key in ('up', 'k'):
+        if key in ('up'):
             self.selection = (self.selection - 1) % len(self.options)
             while self.options[self.selection].get('item_skip_select'):
                 self.selection = (self.selection - 1) % len(self.options)
             self.menu_refresh_main()
             self.layout.body.scroll(self.selection)
-        elif key in ('down', 'j'):
+        elif key in ('down'):
             self.selection = (self.selection + 1) % len(self.options)
             while self.options[self.selection].get('item_skip_select'):
                 self.selection = (self.selection + 1) % len(self.options)
@@ -1052,11 +1052,11 @@ class gameapi_util:
             self.state = self.loop_select_directory
 
     def loop_select_directory(self, key):
-        if key in ('up', 'k'):
+        if key in ('up'):
             self.selection = (self.selection - 1) % len(self.directories)
             self.menu_refresh_objects()
             self.layout.body.scroll(self.selection)
-        elif key in ('down', 'j'):
+        elif key in ('down'):
             self.selection = (self.selection + 1) % len(self.directories)
             self.menu_refresh_objects()
             self.layout.body.scroll(self.selection)
