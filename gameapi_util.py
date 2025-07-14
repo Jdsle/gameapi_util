@@ -436,6 +436,9 @@ void {obj_name}_StageLoad(void);
 void {obj_name}_EditorLoad(void);
 void {obj_name}_EditorDraw(void);
 #endif
+#if RETRO_REV0U
+void {obj_name}_StaticLoad(Object{obj_name} *sVars);
+#endif
 void {obj_name}_Serialize(void);
 
 // Extra Entity Functions
@@ -482,6 +485,9 @@ void {obj_name}_StageLoad(void);
 #if MOD_INCLUDE_EDITOR
 void {obj_name}_EditorLoad(void);
 void {obj_name}_EditorDraw(void);
+#endif
+#if RETRO_REV0U
+void {obj_name}_StaticLoad(Object{obj_name} *sVars);
 #endif
 void {obj_name}_Serialize(void);
 
